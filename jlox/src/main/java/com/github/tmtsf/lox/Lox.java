@@ -1,7 +1,11 @@
 package com.github.tmtsf.lox;
 
+import com.github.tmtsf.lox.ast.expr.Expr;
+import com.github.tmtsf.lox.visitor.ASTPrinter;
+import com.github.tmtsf.lox.parser.Parser;
 import com.github.tmtsf.lox.scanner.Token;
 import com.github.tmtsf.lox.scanner.Scanner;
+import com.github.tmtsf.lox.scanner.TokenType;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -48,10 +52,13 @@ public class Lox {
   private static void run(String source) {
     Scanner scanner = new Scanner(source);
     List<Token> tokens = scanner.scanTokens();
+    Parser parser = new Parser(tokens);
+    Expr expr = parser.parse();
 
-    for (var token : tokens) {
-      System.out.println(token);
-    }
+    if (hadError)
+      return;
+
+    System.out.println(new ASTPrinter().print(expr));
   }
 
   public static void error(int line, String message) {
@@ -61,5 +68,12 @@ public class Lox {
   private static void report(int line, String where, String message) {
     System.err.println("[line " + line + "] Error " + where + ": " + message);
     hadError = true;
+  }
+
+  public static void error(Token token, String message) {
+    if (token.getType() == TokenType.EOF)
+      report(token.getLine(), " at end", message);
+    else
+      report(token.getLine(), " at '" + token.getLexeme() + "'", message);
   }
 }
