@@ -1,6 +1,8 @@
 package com.github.tmtsf.lox;
 
 import com.github.tmtsf.lox.ast.expr.Expr;
+import com.github.tmtsf.lox.exception.RuntimeError;
+import com.github.tmtsf.lox.interpreter.Interpreter;
 import com.github.tmtsf.lox.visitor.ASTPrinter;
 import com.github.tmtsf.lox.parser.Parser;
 import com.github.tmtsf.lox.scanner.Token;
@@ -17,6 +19,9 @@ import java.util.List;
 
 public class Lox {
   static boolean hadError = false;
+  static boolean hadRuntimeError = false;
+
+  private static final Interpreter interpreter = new Interpreter();
 
   public static void main(String[] args) throws IOException {
     if (args.length > 1) {
@@ -33,7 +38,11 @@ public class Lox {
     byte[] bytes = Files.readAllBytes(Paths.get(path));
     run(new String(bytes, Charset.defaultCharset()));
 
-    if (hadError) System.exit(65);
+    if (hadError)
+      System.exit(65);
+
+    if (hadRuntimeError)
+      System.exit(70);
   }
 
   private static void runPrompt() throws IOException {
@@ -58,16 +67,12 @@ public class Lox {
     if (hadError)
       return;
 
-    System.out.println(new ASTPrinter().print(expr));
+    // System.out.println(new ASTPrinter().print(expr));
+    interpreter.interpret(expr);
   }
 
   public static void error(int line, String message) {
     report(line, "", message);
-  }
-
-  private static void report(int line, String where, String message) {
-    System.err.println("[line " + line + "] Error " + where + ": " + message);
-    hadError = true;
   }
 
   public static void error(Token token, String message) {
@@ -75,5 +80,15 @@ public class Lox {
       report(token.getLine(), " at end", message);
     else
       report(token.getLine(), " at '" + token.getLexeme() + "'", message);
+  }
+
+  private static void report(int line, String where, String message) {
+    System.err.println("[line " + line + "] Error " + where + ": " + message);
+    hadError = true;
+  }
+
+  public static void runtimeError(RuntimeError e) {
+    System.err.println(e.getMessage() + "\n[line " + e.getToken().getLine() + "]");
+    hadRuntimeError = true;
   }
 }

@@ -2,6 +2,7 @@ package com.github.tmtsf.lox.parser;
 
 import com.github.tmtsf.lox.Lox;
 import com.github.tmtsf.lox.ast.expr.*;
+import com.github.tmtsf.lox.exception.ParseError;
 import com.github.tmtsf.lox.scanner.Token;
 import com.github.tmtsf.lox.scanner.TokenType;
 
@@ -10,7 +11,6 @@ import java.util.List;
 import static com.github.tmtsf.lox.scanner.TokenType.*;
 
 public class Parser {
-  private static class ParseError extends RuntimeException {}
 
   private final List<Token> tokens;
   private int current = 0;
