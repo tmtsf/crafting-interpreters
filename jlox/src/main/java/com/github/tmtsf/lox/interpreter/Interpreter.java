@@ -2,15 +2,21 @@ package com.github.tmtsf.lox.interpreter;
 
 import com.github.tmtsf.lox.Lox;
 import com.github.tmtsf.lox.ast.expr.*;
+import com.github.tmtsf.lox.ast.stmt.*;
 import com.github.tmtsf.lox.exception.RuntimeError;
 import com.github.tmtsf.lox.scanner.Token;
 import com.github.tmtsf.lox.visitor.ExprVisitor;
+import com.github.tmtsf.lox.visitor.StmtVisitor;
 
-public class Interpreter implements ExprVisitor<Object> {
-  public void interpret(Expr expr) {
+import java.util.List;
+
+public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
+  private Environment environment = new Environment();
+
+  public void interpret(List<Stmt> statements) {
     try {
-      Object value = evaluate(expr);
-      System.out.println(stringfy(value));
+      for (var statement : statements)
+        execute(statement);
     } catch (RuntimeError e) {
       Lox.runtimeError(e);
     }
@@ -91,8 +97,63 @@ public class Interpreter implements ExprVisitor<Object> {
     return null;
   }
 
+  @Override
+  public Object visit(Variable expr) {
+    return environment.get(expr.getName());
+  }
+
+  @Override
+  public Object visit(Assign expr) {
+    Object value = evaluate(expr.getValue());
+    environment.assign(expr.getName(), value);
+    return value;
+  }
+
+  @Override
+  public Void visit(Print stmt) {
+    Object value = evaluate(stmt.getExpression());
+    System.out.println(stringfy(value));
+    return null;
+  }
+
+  @Override
+  public Void visit(Expression stmt) {
+    evaluate(stmt.getExpression());
+    return null;
+  }
+
+  @Override
+  public Void visit(Var stmt) {
+    Object value = null;
+    if (stmt.getInitializer() != null)
+      value = evaluate(stmt.getInitializer());
+
+    environment.define(stmt.getName().getLexeme(), value);
+    return null;
+  }
+
+  @Override
+  public Void visit(Block stmt) {
+    Environment current = new Environment(environment);
+    Environment previous = environment;
+
+    try {
+      environment = current;
+      for (Stmt statement : stmt.getStatements())
+        execute(statement);
+    } finally {
+      environment = previous;
+    }
+
+    return null;
+  }
+
   private Object evaluate(Expr expr) {
     return expr.accept(this);
+  }
+
+  private void execute(Stmt stmt) {
+    stmt.accept(this);
   }
 
   private boolean isTruthy(Object o) {

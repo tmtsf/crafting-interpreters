@@ -1,6 +1,7 @@
 package com.github.tmtsf.lox.visitor;
 
 import com.github.tmtsf.lox.ast.expr.*;
+import com.github.tmtsf.lox.exception.RuntimeError;
 
 public class ASTPrinter implements ExprVisitor<String> {
   public String print(Expr expr) {
@@ -31,6 +32,16 @@ public class ASTPrinter implements ExprVisitor<String> {
   @Override
   public String visit(Grouping expr) {
     return parenthesize("group", expr.getExpr());
+  }
+
+  @Override
+  public String visit(Variable expr) {
+    throw new RuntimeError(expr.getName(), "Cannot print the AST for a variable.");
+  }
+
+  @Override
+  public String visit(Assign expr) {
+    throw new RuntimeError(expr.getName(), "Cannot print the AST for assignment.");
   }
 
   // Utility function

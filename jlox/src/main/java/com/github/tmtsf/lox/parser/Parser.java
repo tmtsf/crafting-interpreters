@@ -2,10 +2,12 @@ package com.github.tmtsf.lox.parser;
 
 import com.github.tmtsf.lox.Lox;
 import com.github.tmtsf.lox.ast.expr.*;
+import com.github.tmtsf.lox.ast.stmt.*;
 import com.github.tmtsf.lox.exception.ParseError;
 import com.github.tmtsf.lox.scanner.Token;
 import com.github.tmtsf.lox.scanner.TokenType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.github.tmtsf.lox.scanner.TokenType.*;
@@ -19,16 +21,97 @@ public class Parser {
     this.tokens = tokens;
   }
 
-  public Expr parse() {
+//  public Expr parse() {
+//    try {
+//      return expression();
+//    } catch (ParseError e) {
+//      return null;
+//    }
+//  }
+
+  public List<Stmt> parse() {
+    List<Stmt> statements = new ArrayList<>();
+    while (!isAtEnd())
+      statements.add(declaration());
+
+    return statements;
+  }
+
+  private Stmt declaration() {
     try {
-      return expression();
+      if (match(VAR))
+        return varDeclaration();
+
+      return statement();
     } catch (ParseError e) {
+      synchronize();
       return null;
     }
   }
 
+  private Stmt varDeclaration() {
+    Token name = consume(IDENTIFIER, "Expect variable name.");
+
+    Expr initializer = null;
+    if (match(EQUAL))
+      initializer = expression();
+
+    consume(SEMICOLON, "Expect ';' after variable declaration.");
+    return new Var(name, initializer);
+  }
+
+  private Stmt statement() {
+    if (match(PRINT))
+      return printStatement();
+
+    if (match(LEFT_BRACE))
+      return new Block(block());
+
+    return expressionStatement();
+  }
+
+  private List<Stmt> block() {
+    List<Stmt> statements = new ArrayList<>();
+
+    while (!check(RIGHT_BRACE) && !isAtEnd())
+      statements.add(declaration());
+
+    consume(RIGHT_BRACE, "Expect '}' after block.");
+    return statements;
+  }
+
+  private Stmt printStatement() {
+    Expr value = expression();
+    consume(SEMICOLON, "Expect ';' after value.");
+    return new Print(value);
+  }
+
+  private Stmt expressionStatement() {
+    Expr expr = expression();
+    consume(SEMICOLON, "Expect ';' after semicolon.");
+    return new Expression(expr);
+  }
+
   private Expr expression() {
-    return equality();
+    return assignment();
+  }
+
+  private Expr assignment() {
+    Expr expr = equality();
+
+    if (match(EQUAL)) {
+      Token equals = previous();
+      Expr value = assignment();
+
+      if (expr instanceof Variable) {
+        Token name = ((Variable) expr).getName();
+        return new Assign(name, value);
+      }
+
+      error(equals, "Invalid assignment target.");
+    }
+
+    return expr;
   }
 
   private Expr equality() {
@@ -100,6 +183,9 @@ public class Parser {
     if (match(NUMBER, STRING))
       return new Literal(previous().getLiteral());
 
+    if (match(IDENTIFIER))
+      return new Variable(previous());
+
     if (match(LEFT_PAREN)) {
       Expr expr = expression();
       consume(RIGHT_PAREN, "Expect ')' after expression.");
@@ -158,5 +244,9 @@ public class Parser {
   private ParseError error(Token token, String message) {
     Lox.error(token, message);
     return new ParseError();
+  }
+
+  private void synchronize() {
+
   }
 }

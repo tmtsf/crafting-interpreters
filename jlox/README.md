@@ -9,7 +9,7 @@ public enum TokenType {
   // Single-character tokens
   LEFT_PAREN,        // (
   RIGHT_PAREN,       // )
-  LEFT_BRACE,        // { 
+  LEFT_BRACE,        // {
   RIGHT_BRACE,       // }
   COMMA,             // ,
   DOT,               // .
@@ -56,7 +56,7 @@ public enum TokenType {
 }
 ```
 
-A token is represented by its type, lexeme (a string representing the token), literal (the actual value of the token), 
+A token is represented by its type, lexeme (a string representing the token), literal (the actual value of the token),
 and the line number it appears in the source code.
 
 ```Java
@@ -105,7 +105,7 @@ unary           -> ( "-" | "!" ) unary
 primary         -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
 ```
 
-Here, we first introduce an abstract class to represent all the expressions in a tree form, known as the abstract 
+Here, we first introduce an abstract class to represent all the expressions in a tree form, known as the abstract
 syntax tree (AST).
 
 ```Java
@@ -114,7 +114,7 @@ public abstract class Expr {
 }
 ```
 
-The `accept` method is an essential component of the visitor design pattern, which is heavily used in compilers for 
+The `accept` method is an essential component of the visitor design pattern, which is heavily used in compilers for
 processing the AST. For different types of expressions, we have concrete implementations of the abstract `Expr` class.
 Parsing is performed in a recursive descent fashion.
 
@@ -129,7 +129,47 @@ which can only parse and interpret a *single* line of expression.
 
 ## Statements
 
+Adding statements, the BNF becomes
 
+```
+program         -> declaration* EOF ;
+declaration     -> varDecl | statement ;
+varDecl         -> "var" IDENTIFIER ( "=" expression )? ";" ;
+statement       -> exprStmt | printStmt | block ;
+block           -> "{" declaration* "}" ;
+
+exprStmt        -> expression ";" ;
+printStmt       -> "print" expression ";" ;
+
+expression      -> assignment ;
+assignment      -> IDENTIFIER "=" assignment | equality ;
+equality        -> comparison ( ( "!=" | "==" ) comparison )* ;
+comparison      -> term ( ( "<" | "<=" | ">" | ">=" ) term )* ;
+term            -> factor ( ( "+" | "-" ) factor )* ;
+factor          -> unary ( ( "*" | "/" ) unary )* ;
+unary           -> ( "-" | "!" ) unary | primary ;
+primary         -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
+
+```
+
+The `Interpreter` also needs to handle statements, so it implements
+`StmtVisitor<Void>`:
+
+```Java
+public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
+```
+
+Since we have introduced variable declaration statement, we need an object to associate variables to values that they have
+stored.
+
+```Java
+class Environment {
+  private final Map<String, Object> values = new HashMap<>();
+}
+```
+
+Then, we can define, retrieve, and update a variable value. By chaining the `Environment`'s together, we are also able to
+manage scopes for variables.
 
 ## Adding flow control
 

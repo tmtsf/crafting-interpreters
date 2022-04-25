@@ -1,9 +1,9 @@
 package com.github.tmtsf.lox;
 
 import com.github.tmtsf.lox.ast.expr.Expr;
+import com.github.tmtsf.lox.ast.stmt.Stmt;
 import com.github.tmtsf.lox.exception.RuntimeError;
 import com.github.tmtsf.lox.interpreter.Interpreter;
-import com.github.tmtsf.lox.visitor.ASTPrinter;
 import com.github.tmtsf.lox.parser.Parser;
 import com.github.tmtsf.lox.scanner.Token;
 import com.github.tmtsf.lox.scanner.Scanner;
@@ -62,13 +62,13 @@ public class Lox {
     Scanner scanner = new Scanner(source);
     List<Token> tokens = scanner.scanTokens();
     Parser parser = new Parser(tokens);
-    Expr expr = parser.parse();
+    List<Stmt> statements = parser.parse();
 
     if (hadError)
       return;
 
     // System.out.println(new ASTPrinter().print(expr));
-    interpreter.interpret(expr);
+    interpreter.interpret(statements);
   }
 
   public static void error(int line, String message) {
@@ -88,7 +88,7 @@ public class Lox {
   }
 
   public static void runtimeError(RuntimeError e) {
-    System.err.println(e.getMessage() + "\n[line " + e.getToken().getLine() + "]");
+    System.err.println(e.getMessage() + "\n[line " + e.getToken().getLine() + "]: " + e.getToken().getLexeme());
     hadRuntimeError = true;
   }
 }
