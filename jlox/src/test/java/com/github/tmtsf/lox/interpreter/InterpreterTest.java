@@ -36,4 +36,24 @@ public class InterpreterTest {
   public void testScope() throws Exception {
     doTest("scope.lox");
   }
+
+  @Test
+  public void testIf() throws Exception {
+    doTest("if.lox");
+  }
+
+  @Test
+  public void testLogical() throws Exception {
+    doTest("logical.lox");
+  }
+
+  @Test
+  public void testWhile() throws Exception {
+    doTest("while.lox");
+  }
+
+  @Test
+  public void testFor() throws Exception {
+    doTest("for.lox");
+  }
 }

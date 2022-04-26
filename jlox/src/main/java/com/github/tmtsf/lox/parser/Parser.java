@@ -8,6 +8,7 @@ import com.github.tmtsf.lox.scanner.Token;
 import com.github.tmtsf.lox.scanner.TokenType;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.github.tmtsf.lox.scanner.TokenType.*;
@@ -61,6 +62,15 @@ public class Parser {
   }
 
   private Stmt statement() {
+    if (match(IF))
+      return ifStatement();
+
+    if (match(WHILE))
+      return whileStatement();
+
+    if (match(FOR))
+      return forStatement();
+
     if (match(PRINT))
       return printStatement();
 
@@ -68,6 +78,76 @@ public class Parser {
       return new Block(block());
 
     return expressionStatement();
+  }
+
+  private Stmt ifStatement() {
+    consume(LEFT_PAREN, "Expect '(' after 'if'.");
+    Expr condition = expression();
+    consume(RIGHT_PAREN, "Expect ')' after condition.");
+
+    Stmt thenBranch = statement();
+    Stmt elseBranch = null;
+    if (match(ELSE))
+      elseBranch = statement();
+
+    return new If(condition, thenBranch, elseBranch);
+  }
+
+  private Stmt whileStatement() {
+    consume(LEFT_PAREN, "Expect '(' after 'while'.");
+    Expr condition = expression();
+    consume(RIGHT_PAREN, "Expect ')' after condition.");
+
+    Stmt body = statement();
+
+    return new While(condition, body);
+  }
+
+  // Transform the for loop:
+  // for ( initializer ; condition ; increment )
+  //   body ;
+  //
+  // to an equivalent while loop:
+  // initializer ;
+  // while ( condition ) {
+  //   body ;
+  //   increment ;
+  // }
+  private Stmt forStatement() {
+    consume(LEFT_PAREN, "Expect '(' after 'for'.");
+
+    Stmt initializer;
+    if (match(SEMICOLON))
+      initializer = null;
+    else if (match(VAR))
+      initializer = varDeclaration();
+    else
+      initializer = expressionStatement();
+
+    Expr condition = null;
+    if (!check(SEMICOLON))
+      condition = expression();
+
+    consume(SEMICOLON, "Expect ';' after loop condition.");
+
+    Expr increment = null;
+    if (!check(RIGHT_PAREN))
+      increment = expression();
+
+    consume(RIGHT_PAREN, "Expect ')' after for clauses.");
+    Stmt body = statement();
+
+    if (increment != null)
+      body = new Block(Arrays.asList(body, new Expression(increment)));
+
+    if (condition == null)
+      condition = new Literal(true);
+
+    body = new While(condition, body);
+    if (initializer != null)
+      body = new Block(Arrays.asList(initializer, body));
+
+    return body;
   }
 
   private List<Stmt> block() {
@@ -97,7 +177,7 @@ public class Parser {
   }
 
   private Expr assignment() {
-    Expr expr = equality();
+    Expr expr = or();
 
     if (match(EQUAL)) {
       Token equals = previous();
@@ -109,6 +189,30 @@ public class Parser {
       }
 
       error(equals, "Invalid assignment target.");
+    }
+
+    return expr;
+  }
+
+  private Expr or() {
+    Expr expr = and();
+
+    while (match(OR)) {
+      Token operator = previous();
+      Expr right = and();
+      expr = new Logical(expr, operator, right);
+    }
+
+    return expr;
+  }
+
+  private Expr and() {
+    Expr expr = equality();
+
+    while (match(AND)) {
+      Token operator = previous();
+      Expr right = equality();
+      expr = new Logical(expr, operator, right);
     }
 
     return expr;
@@ -247,6 +351,25 @@ public class Parser {
   }
 
   private void synchronize() {
+    advance();
 
+    while (!isAtEnd()) {
+      if (previous().getType() == SEMICOLON)
+        return;
+
+      switch (peek().getType()) {
+        case CLASS:
+        case FUN:
+        case VAR:
+        case FOR:
+        case IF:
+        case WHILE:
+        case PRINT:
+        case RETURN:
+          return;
+      }
+
+      advance();
+    }
   }
 }

@@ -44,6 +44,11 @@ public class ASTPrinter implements ExprVisitor<String> {
     throw new RuntimeError(expr.getName(), "Cannot print the AST for assignment.");
   }
 
+  @Override
+  public String visit(Logical expr) {
+    throw new RuntimeError(expr.getOperator(), "Cannot print the AST for logical operation.");
+  }
+
   // Utility function
   private String parenthesize(String name, Expr... exprs) {
     StringBuilder builder = new StringBuilder();

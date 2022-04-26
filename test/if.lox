@@ -1,0 +1,5 @@
+var x = 3;
+if (x * x > 10)
+  print "Square larger then 10.";
+else
+  print "Square smaller then 10.";

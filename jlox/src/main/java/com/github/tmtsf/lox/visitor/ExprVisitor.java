@@ -9,4 +9,5 @@ public interface ExprVisitor<R> {
   R visit(Grouping expr);
   R visit(Variable expr);
   R visit(Assign expr);
+  R visit(Logical expr);
 }

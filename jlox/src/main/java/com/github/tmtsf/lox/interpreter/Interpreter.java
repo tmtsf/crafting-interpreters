@@ -5,6 +5,7 @@ import com.github.tmtsf.lox.ast.expr.*;
 import com.github.tmtsf.lox.ast.stmt.*;
 import com.github.tmtsf.lox.exception.RuntimeError;
 import com.github.tmtsf.lox.scanner.Token;
+import com.github.tmtsf.lox.scanner.TokenType;
 import com.github.tmtsf.lox.visitor.ExprVisitor;
 import com.github.tmtsf.lox.visitor.StmtVisitor;
 
@@ -110,6 +111,20 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
   }
 
   @Override
+  public Object visit(Logical expr) {
+    Object left = evaluate(expr.getLeft());
+    if (expr.getOperator().getType() == TokenType.OR) {
+      if (isTruthy(left))
+        return left;
+    } else {
+      if (!isTruthy(left))
+        return left;
+    }
+
+    return evaluate(expr.getRight());
+  }
+
+  @Override
   public Void visit(Print stmt) {
     Object value = evaluate(stmt.getExpression());
     System.out.println(stringfy(value));
@@ -144,6 +159,24 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
     } finally {
       environment = previous;
     }
+
+    return null;
+  }
+
+  @Override
+  public Void visit(If stmt) {
+    if (isTruthy(evaluate(stmt.getCondition())))
+      execute(stmt.getThenBranch());
+    else if (stmt.getElseBranch() != null)
+      execute(stmt.getElseBranch());
+
+    return null;
+  }
+
+  @Override
+  public Void visit(While stmt) {
+    while (isTruthy(evaluate(stmt.getCondition())))
+      execute(stmt.getBody());
 
     return null;
   }

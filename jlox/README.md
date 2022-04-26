@@ -122,6 +122,8 @@ The `Interpreter` is an implementation of `ExprVisitor<Object>`.
 
 ```Java
 public class Interpreter implements ExprVisitor<Object> {
+  // ...
+}
 ```
 
 It implements the `visit` method for all `Expr` types. Now, we have a simple interpreter
@@ -136,10 +138,10 @@ program         -> declaration* EOF ;
 declaration     -> varDecl | statement ;
 varDecl         -> "var" IDENTIFIER ( "=" expression )? ";" ;
 statement       -> exprStmt | printStmt | block ;
-block           -> "{" declaration* "}" ;
 
 exprStmt        -> expression ";" ;
 printStmt       -> "print" expression ";" ;
+block           -> "{" declaration* "}" ;
 
 expression      -> assignment ;
 assignment      -> IDENTIFIER "=" assignment | equality ;
@@ -149,7 +151,6 @@ term            -> factor ( ( "+" | "-" ) factor )* ;
 factor          -> unary ( ( "*" | "/" ) unary )* ;
 unary           -> ( "-" | "!" ) unary | primary ;
 primary         -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
-
 ```
 
 The `Interpreter` also needs to handle statements, so it implements
@@ -157,6 +158,8 @@ The `Interpreter` also needs to handle statements, so it implements
 
 ```Java
 public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
+  // ...
+}
 ```
 
 Since we have introduced variable declaration statement, we need an object to associate variables to values that they have
@@ -171,9 +174,35 @@ class Environment {
 Then, we can define, retrieve, and update a variable value. By chaining the `Environment`'s together, we are also able to
 manage scopes for variables.
 
-## Adding flow control
+## Adding control flow
 
+Adding control flow, the BNF becomes
 
+```
+program         -> declaration* EOF ;
+declaration     -> varDecl | statement ;
+varDecl         -> "var" IDENTIFIER ( "=" expression )? ";" ;
+statement       -> exprStmt | ifStmt | whileStmt printStmt | block ;
+
+exprStmt        -> expression ";" ;
+ifStmt          -> "if" "(" expression ")" statement ( "else" statement )? ;
+whileStmt       -> "while" "(" expression ")" statement ;
+printStmt       -> "print" expression ";" ;
+block           -> "{" declaration* "}" ;
+
+expression      -> assignment ;
+assignment      -> IDENTIFIER "=" assignment | logic_or ;
+logic_or        -> logic_and ( "or" logic_and )* ;
+logic_and       -> equality ( "and" equality )* ;
+equality        -> comparison ( ( "!=" | "==" ) comparison )* ;
+comparison      -> term ( ( "<" | "<=" | ">" | ">=" ) term )* ;
+term            -> factor ( ( "+" | "-" ) factor )* ;
+factor          -> unary ( ( "*" | "/" ) unary )* ;
+unary           -> ( "-" | "!" ) unary | primary ;
+primary         -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
+```
+
+We will not directly support for loop with another `forStmt`. Rather, we will implement it as an equivalent `whileStmt`.
 
 ## Adding functions
 
