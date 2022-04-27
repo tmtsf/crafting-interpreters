@@ -41,12 +41,17 @@ public class ASTPrinter implements ExprVisitor<String> {
 
   @Override
   public String visit(Assign expr) {
-    throw new RuntimeError(expr.getName(), "Cannot print the AST for assignment.");
+    throw new RuntimeError(expr.getName(), "Cannot print the AST for an assignment.");
   }
 
   @Override
   public String visit(Logical expr) {
-    throw new RuntimeError(expr.getOperator(), "Cannot print the AST for logical operation.");
+    throw new RuntimeError(expr.getOperator(), "Cannot print the AST for a logical operation.");
+  }
+
+  @Override
+  public String visit(Call expr) {
+    throw new RuntimeError(expr.getToken(), "Cannot print the AST for a function call.");
   }
 
   // Utility function

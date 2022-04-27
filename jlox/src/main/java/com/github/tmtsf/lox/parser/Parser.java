@@ -10,6 +10,7 @@ import com.github.tmtsf.lox.scanner.TokenType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
 
 import static com.github.tmtsf.lox.scanner.TokenType.*;
 
@@ -40,6 +41,9 @@ public class Parser {
 
   private Stmt declaration() {
     try {
+      if (match(FUN))
+        return funDeclaration("function");
+
       if (match(VAR))
         return varDeclaration();
 
@@ -48,6 +52,25 @@ public class Parser {
       synchronize();
       return null;
     }
+  }
+
+  private Stmt funDeclaration(String kind) {
+    Token name = consume(IDENTIFIER, "Expect " + kind + " name.");
+    consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
+    List<Token> parameters = new ArrayList<>();
+    if (!check(RIGHT_PAREN)) {
+      do {
+        if (parameters.size() >= 255)
+          error(peek(), "Cannot have more than 255 parameters.");
+
+        parameters.add(consume(IDENTIFIER, "Expect parameter name."));
+      } while (match(COMMA));
+    }
+    consume(RIGHT_PAREN, "Expect ')' after parameters.");
+
+    consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
+    List<Stmt> body = block();
+    return new Function(name, parameters, body);
   }
 
   private Stmt varDeclaration() {
@@ -73,6 +96,9 @@ public class Parser {
 
     if (match(PRINT))
       return printStatement();
+
+    if (match(RETURN))
+      return returnStatement();
 
     if (match(LEFT_BRACE))
       return new Block(block());
@@ -170,6 +196,16 @@ public class Parser {
     Expr expr = expression();
     consume(SEMICOLON, "Expect ';' after semicolon.");
     return new Expression(expr);
+  }
+
+  private Stmt returnStatement() {
+    Token keyword = previous();
+    Expr value = null;
+    if (!check(SEMICOLON))
+      value = expression();
+
+    consume(SEMICOLON, "Expect ';' after return value.");
+    return new Return(keyword, value);
   }
 
   private Expr expression() {
@@ -273,7 +309,20 @@ public class Parser {
       return new Unary(operator, right);
     }
 
-    return primary();
+    return call();
+  }
+
+  private Expr call() {
+    Expr expr = primary();
+
+    while (true) {
+      if (match(LEFT_PAREN))
+        expr = finishCall(expr);
+      else
+        break;
+    }
+
+    return expr;
   }
 
   private Expr primary() {
@@ -337,6 +386,22 @@ public class Parser {
     return tokens.get(current - 1);
   }
 
+  private Expr finishCall(Expr callee) {
+    List<Expr> arguments = new ArrayList<>();
+    if (!check(RIGHT_PAREN)) {
+      do {
+        if (arguments.size() >= 255)
+          error(peek(), "Cannot have more than 255 arguments.");
+
+        arguments.add(expression());
+      } while (match(COMMA));
+    }
+
+    Token paren = consume(RIGHT_PAREN, "Expect ')' after arguments.");
+
+    return new Call(callee, paren, arguments);
+  }
+
   // Error handling
   private Token consume(TokenType type, String message) {
     if (check(type))
@@ -367,6 +432,9 @@ public class Parser {
         case PRINT:
         case RETURN:
           return;
+        default:
+          // Not the beginning of a new statement? Keep on going!
+          break;
       }
 
       advance();

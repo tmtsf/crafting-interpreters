@@ -9,4 +9,6 @@ public interface StmtVisitor<R> {
   R visit(Block stmt);
   R visit(If stmt);
   R visit(While stmt);
+  R visit(Function stmt);
+  R visit(Return stmt);
 }

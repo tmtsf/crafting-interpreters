@@ -3,16 +3,38 @@ package com.github.tmtsf.lox.interpreter;
 import com.github.tmtsf.lox.Lox;
 import com.github.tmtsf.lox.ast.expr.*;
 import com.github.tmtsf.lox.ast.stmt.*;
+import com.github.tmtsf.lox.exception.ReturnValueException;
 import com.github.tmtsf.lox.exception.RuntimeError;
 import com.github.tmtsf.lox.scanner.Token;
 import com.github.tmtsf.lox.scanner.TokenType;
 import com.github.tmtsf.lox.visitor.ExprVisitor;
 import com.github.tmtsf.lox.visitor.StmtVisitor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
-  private Environment environment = new Environment();
+  final Environment globals = new Environment();
+  private Environment environment = globals;
+
+  public Interpreter() {
+    globals.define("clock", new LoxCallable() {
+      @Override
+      public int arity() {
+        return 0;
+      }
+
+      @Override
+      public Object call(Interpreter interpreter, List<Object> arguments) {
+        return (double)System.currentTimeMillis() / 1000.0;
+      }
+
+      @Override
+      public String toString() {
+        return "<native fn>";
+      }
+    });
+  }
 
   public void interpret(List<Stmt> statements) {
     try {
@@ -67,6 +89,9 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
       case EQUAL_EQUAL:
         checkNumberOperands(operator, left, right);
         return  isEqual(left, right);
+      default:
+        // Binary expression should only take supported operators. Cannot reach here.
+        break;
     }
 
     return null;
@@ -93,6 +118,9 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
       case MINUS:
         checkNumberOperands(operator, right);
         return -(double)right;
+      default:
+        // Unary expression should only take either ! or -. Cannot reach here.
+        break;
     }
 
     return null;
@@ -125,6 +153,26 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
   }
 
   @Override
+  public Object visit(Call expr) {
+    Object callee = evaluate(expr.getCallee());
+
+    List<Object> arguments = new ArrayList<>();
+    for (var arg : expr.getArguments())
+      arguments.add(evaluate(arg));
+
+    if (!(callee instanceof LoxCallable))
+      throw new RuntimeError(expr.getToken(), "Can only call functions and classes.");
+
+    LoxCallable function = (LoxCallable)callee;
+    if (function.arity() != arguments.size())
+      throw new RuntimeError(expr.getToken(),
+                     "Expected " + function.arity() + " arguments but got "
+                             + arguments.size() + ".");
+
+    return function.call(this, arguments);
+  }
+
+  @Override
   public Void visit(Print stmt) {
     Object value = evaluate(stmt.getExpression());
     System.out.println(stringfy(value));
@@ -149,17 +197,7 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
 
   @Override
   public Void visit(Block stmt) {
-    Environment current = new Environment(environment);
-    Environment previous = environment;
-
-    try {
-      environment = current;
-      for (Stmt statement : stmt.getStatements())
-        execute(statement);
-    } finally {
-      environment = previous;
-    }
-
+    execute(stmt.getStatements(), new Environment(environment));
     return null;
   }
 
@@ -181,12 +219,41 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
     return null;
   }
 
+  @Override
+  public Void visit(Function stmt) {
+    LoxFunction function = new LoxFunction(stmt);
+    environment.define(stmt.getName().getLexeme(), function);
+
+    return null;
+  }
+
+  @Override
+  public Void visit(Return stmt) {
+    Object value = null;
+    if (stmt.getValue() != null)
+      value = evaluate(stmt.getValue());
+
+    throw new ReturnValueException(value);
+  }
+
   private Object evaluate(Expr expr) {
     return expr.accept(this);
   }
 
   private void execute(Stmt stmt) {
     stmt.accept(this);
+  }
+
+  void execute(List<Stmt> statements, Environment current) {
+    Environment previous = environment;
+
+    try {
+      environment = current;
+      for (Stmt statement : statements)
+        execute(statement);
+    } finally {
+      environment = previous;
+    }
   }
 
   private boolean isTruthy(Object o) {

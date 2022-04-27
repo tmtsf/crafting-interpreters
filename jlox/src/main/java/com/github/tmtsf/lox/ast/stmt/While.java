@@ -1,7 +1,6 @@
 package com.github.tmtsf.lox.ast.stmt;
 
 import com.github.tmtsf.lox.ast.expr.Expr;
-import com.github.tmtsf.lox.visitor.ExprVisitor;
 import com.github.tmtsf.lox.visitor.StmtVisitor;
 
 public class While extends Stmt {

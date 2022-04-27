@@ -56,4 +56,29 @@ public class InterpreterTest {
   public void testFor() throws Exception {
     doTest("for.lox");
   }
+
+  @Test
+  public void testFunArity() throws Exception {
+    doTest("fun_arity.lox");
+  }
+
+  @Test
+  public void testFunCount() throws Exception {
+    doTest("fun_count.lox");
+  }
+
+  @Test
+  public void testFunHi() throws Exception {
+    doTest("fun_hi.lox");
+  }
+
+  @Test
+  public void testFunName() throws Exception {
+    doTest("fun_name.lox");
+  }
+
+  @Test
+  public void testFib() throws Exception {
+    doTest("fib.lox");
+  }
 }

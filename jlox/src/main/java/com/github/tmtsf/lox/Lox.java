@@ -1,6 +1,5 @@
 package com.github.tmtsf.lox;
 
-import com.github.tmtsf.lox.ast.expr.Expr;
 import com.github.tmtsf.lox.ast.stmt.Stmt;
 import com.github.tmtsf.lox.exception.RuntimeError;
 import com.github.tmtsf.lox.interpreter.Interpreter;

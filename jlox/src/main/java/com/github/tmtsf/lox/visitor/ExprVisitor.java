@@ -10,4 +10,5 @@ public interface ExprVisitor<R> {
   R visit(Variable expr);
   R visit(Assign expr);
   R visit(Logical expr);
+  R visit(Call expr);
 }

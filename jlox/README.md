@@ -206,5 +206,38 @@ We will not directly support for loop with another `forStmt`. Rather, we will im
 
 ## Adding functions
 
+With functions, the BNF is
+
+```
+program         -> declaration* EOF ;
+declaration     -> funDecl | varDecl | statement ;
+funDecl         -> "fun" function ;
+varDecl         -> "var" IDENTIFIER ( "=" expression )? ";" ;
+statement       -> exprStmt | ifStmt | whileStmt printStmt | block ;
+
+function        -> IDENTIFIER "(" parameters? ")" block;
+exprStmt        -> expression ";" ;
+ifStmt          -> "if" "(" expression ")" statement ( "else" statement )? ;
+whileStmt       -> "while" "(" expression ")" statement ;
+printStmt       -> "print" expression ";" ;
+returnStmt      -> "return" expression? ";" ;
+block           -> "{" declaration* "}" ;
+
+expression      -> assignment ;
+assignment      -> IDENTIFIER "=" assignment | logic_or ;
+logic_or        -> logic_and ( "or" logic_and )* ;
+logic_and       -> equality ( "and" equality )* ;
+equality        -> comparison ( ( "!=" | "==" ) comparison )* ;
+comparison      -> term ( ( "<" | "<=" | ">" | ">=" ) term )* ;
+term            -> factor ( ( "+" | "-" ) factor )* ;
+factor          -> unary ( ( "*" | "/" ) unary )* ;
+unary           -> ( "-" | "!" ) unary | call ;
+call            -> primary ( "(" arguments? ")" )* ;
+primary         -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
+
+arguments       -> expression ( "," expression )* ;
+parameters      -> IDENTIFIER ( "," IDENTIFIER )* ;
+```
+
 
 
