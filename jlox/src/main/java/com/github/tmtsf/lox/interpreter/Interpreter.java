@@ -221,7 +221,7 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
 
   @Override
   public Void visit(Function stmt) {
-    LoxFunction function = new LoxFunction(stmt);
+    LoxFunction function = new LoxFunction(stmt, environment);
     environment.define(stmt.getName().getLexeme(), function);
 
     return null;

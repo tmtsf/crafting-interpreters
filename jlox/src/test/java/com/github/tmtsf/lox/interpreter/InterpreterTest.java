@@ -81,4 +81,14 @@ public class InterpreterTest {
   public void testFib() throws Exception {
     doTest("fib.lox");
   }
+
+  @Test
+  public void testLocal() throws Exception {
+    doTest("local.lox");
+  }
+
+  @Test
+  public void testLocalError() throws Exception {
+    doTest("local_err.lox");
+  }
 }
