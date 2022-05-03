@@ -11,11 +11,14 @@ import com.github.tmtsf.lox.visitor.ExprVisitor;
 import com.github.tmtsf.lox.visitor.StmtVisitor;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
   final Environment globals = new Environment();
   private Environment environment = globals;
+  private final Map<Expr, Integer> locals = new HashMap<>();
 
   public Interpreter() {
     globals.define("clock", new LoxCallable() {
@@ -128,13 +131,19 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
 
   @Override
   public Object visit(Variable expr) {
-    return environment.get(expr.getName());
+    return lookup(expr.getName(), expr);
   }
 
   @Override
   public Object visit(Assign expr) {
     Object value = evaluate(expr.getValue());
-    environment.assign(expr.getName(), value);
+
+    Integer distance = locals.get(expr);
+    if (distance != null)
+      environment.assignAt(distance, expr.getName(), value);
+    else
+      globals.assign(expr.getName(), value);
+
     return value;
   }
 
@@ -175,7 +184,7 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
   @Override
   public Void visit(Print stmt) {
     Object value = evaluate(stmt.getExpression());
-    System.out.println(stringfy(value));
+    System.out.println(stringify(value));
     return null;
   }
 
@@ -256,6 +265,18 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
     }
   }
 
+  void resolve(Expr expr, int depth) {
+    locals.put(expr, depth);
+  }
+
+  private Object lookup(Token token, Expr expr) {
+    Integer distance = locals.get(expr);
+    if (distance != null)
+      return environment.getAt(distance, token.getLexeme());
+    else
+      return globals.get(token);
+  }
+
   private boolean isTruthy(Object o) {
     if (o == null)
       return false;
@@ -280,7 +301,7 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
     }
   }
 
-  private String stringfy(Object o) {
+  private String stringify(Object o) {
     if (o == null)
       return "nil";
 

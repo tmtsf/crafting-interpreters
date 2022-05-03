@@ -13,13 +13,18 @@ public class InterpreterTest {
   private static final Interpreter interpreter = new Interpreter();
 
   private void doTest(String filename) throws Exception {
-    byte[] bytes = Files.readAllBytes(Paths.get(testDir + filename));
+    var bytes = Files.readAllBytes(Paths.get(testDir + filename));
 
-    Scanner scanner = new Scanner(new String(bytes, Charset.defaultCharset()));
+    var scanner = new Scanner(new String(bytes, Charset.defaultCharset()));
     var tokens = scanner.scanTokens();
 
-    Parser parer = new Parser(tokens);
-    interpreter.interpret(parer.parse());
+    var parer = new Parser(tokens);
+    var statements = parer.parse();
+
+    var resolver = new Resolver(interpreter);
+    resolver.resolve(statements);
+
+    interpreter.interpret(statements);
   }
 
   @Test

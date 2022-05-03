@@ -3,6 +3,7 @@ package com.github.tmtsf.lox;
 import com.github.tmtsf.lox.ast.stmt.Stmt;
 import com.github.tmtsf.lox.exception.RuntimeError;
 import com.github.tmtsf.lox.interpreter.Interpreter;
+import com.github.tmtsf.lox.interpreter.Resolver;
 import com.github.tmtsf.lox.parser.Parser;
 import com.github.tmtsf.lox.scanner.Token;
 import com.github.tmtsf.lox.scanner.Scanner;
@@ -15,6 +16,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
 
 public class Lox {
   static boolean hadError = false;
@@ -67,6 +69,10 @@ public class Lox {
       return;
 
     // System.out.println(new ASTPrinter().print(expr));
+
+    Resolver resolver = new Resolver(interpreter);
+    resolver.resolve(statements);
+
     interpreter.interpret(statements);
   }
 

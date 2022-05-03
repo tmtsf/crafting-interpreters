@@ -10,7 +10,6 @@ import com.github.tmtsf.lox.scanner.TokenType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
 
 import static com.github.tmtsf.lox.scanner.TokenType.*;
 
