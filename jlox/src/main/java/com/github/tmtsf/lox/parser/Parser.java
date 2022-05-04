@@ -219,7 +219,7 @@ public class Parser {
       Expr value = assignment();
 
       if (expr instanceof Variable) {
-        Token name = ((Variable) expr).getName();
+        Token name = ((Variable) expr).getToken();
         return new Assign(name, value);
       }
 

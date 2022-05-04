@@ -30,34 +30,34 @@ public class Resolver implements ExprVisitor<Void>, StmtVisitor<Void> {
 
   @Override
   public Void visit(Var stmt) {
-    declare(stmt.getName());
+    declare(stmt.getToken());
     if (stmt.getInitializer() != null)
       resolve(stmt.getInitializer());
 
-    define(stmt.getName());
+    define(stmt.getToken());
     return null;
   }
 
   @Override
   public Void visit(Variable expr) {
-    if (!scopes.isEmpty() && scopes.peek().get(expr.getName().getLexeme()) == Boolean.FALSE)
-      Lox.error(expr.getName(), "Cannot read local variable in its own initializer.");
+    if (!scopes.isEmpty() && scopes.peek().get(expr.getToken().getLexeme()) == Boolean.FALSE)
+      Lox.error(expr.getToken(), "Cannot read local variable in its own initializer.");
 
-    resolveLocal(expr, expr.getName());
+    resolveLocal(expr, expr.getToken());
     return null;
   }
 
   @Override
   public Void visit(Assign expr) {
     resolve(expr.getValue());
-    resolveLocal(expr, expr.getName());
+    resolveLocal(expr, expr.getToken());
     return null;
   }
 
   @Override
   public Void visit(Function stmt) {
-    declare(stmt.getName());
-    define(stmt.getName());
+    declare(stmt.getToken());
+    define(stmt.getToken());
 
     resolveFunction(stmt);
     return null;

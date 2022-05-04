@@ -6,18 +6,18 @@ import com.github.tmtsf.lox.visitor.StmtVisitor;
 import java.util.List;
 
 public class Function extends Stmt {
-  private final Token name;
+  private final Token token;
   private final List<Token> parameters;
   private final List<Stmt> body;
 
-  public Function(Token name, List<Token> parameters, List<Stmt> body) {
-    this.name = name;
+  public Function(Token token, List<Token> parameters, List<Stmt> body) {
+    this.token = token;
     this.parameters = parameters;
     this.body = body;
   }
 
-  public Token getName() {
-    return name;
+  public Token getToken() {
+    return token;
   }
 
   public List<Token> getParameters() {

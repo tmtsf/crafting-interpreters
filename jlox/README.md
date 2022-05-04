@@ -239,5 +239,14 @@ arguments       -> expression ( "," expression )* ;
 parameters      -> IDENTIFIER ( "," IDENTIFIER )* ;
 ```
 
+## Local variable binding and resolving
 
+For local variable binding and resolving, an extra traversal of the AST is required. This is done before the
+interpreter pass. As usual, it is implemented as a visitor:
+
+```Java
+public class Resolver implements ExprVisitor<Void>, StmtVisitor<Void> {
+  // ...
+}
+```
 

@@ -4,14 +4,14 @@ import com.github.tmtsf.lox.scanner.Token;
 import com.github.tmtsf.lox.visitor.ExprVisitor;
 
 public class Variable extends Expr {
-  private final Token name;
+  private final Token token;
 
-  public Variable(Token name) {
-    this.name = name;
+  public Variable(Token token) {
+    this.token = token;
   }
 
-  public Token getName() {
-    return name;
+  public Token getToken() {
+    return token;
   }
 
   @Override

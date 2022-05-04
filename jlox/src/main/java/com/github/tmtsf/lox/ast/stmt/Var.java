@@ -5,16 +5,16 @@ import com.github.tmtsf.lox.scanner.Token;
 import com.github.tmtsf.lox.visitor.StmtVisitor;
 
 public class Var extends Stmt {
-  private final Token name;
+  private final Token token;
   private final Expr initializer;
 
-  public Var(Token name, Expr initializer) {
-    this.name = name;
+  public Var(Token token, Expr initializer) {
+    this.token = token;
     this.initializer = initializer;
   }
 
-  public Token getName() {
-    return name;
+  public Token getToken() {
+    return token;
   }
 
   public Expr getInitializer() {

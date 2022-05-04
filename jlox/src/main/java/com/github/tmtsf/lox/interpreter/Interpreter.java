@@ -131,7 +131,7 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
 
   @Override
   public Object visit(Variable expr) {
-    return lookup(expr.getName(), expr);
+    return lookup(expr.getToken(), expr);
   }
 
   @Override
@@ -140,9 +140,9 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
 
     Integer distance = locals.get(expr);
     if (distance != null)
-      environment.assignAt(distance, expr.getName(), value);
+      environment.assignAt(distance, expr.getToken(), value);
     else
-      globals.assign(expr.getName(), value);
+      globals.assign(expr.getToken(), value);
 
     return value;
   }
@@ -200,7 +200,7 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
     if (stmt.getInitializer() != null)
       value = evaluate(stmt.getInitializer());
 
-    environment.define(stmt.getName().getLexeme(), value);
+    environment.define(stmt.getToken().getLexeme(), value);
     return null;
   }
 
@@ -231,7 +231,7 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
   @Override
   public Void visit(Function stmt) {
     LoxFunction function = new LoxFunction(stmt, environment);
-    environment.define(stmt.getName().getLexeme(), function);
+    environment.define(stmt.getToken().getLexeme(), function);
 
     return null;
   }

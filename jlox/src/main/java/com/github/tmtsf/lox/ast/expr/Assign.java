@@ -4,16 +4,16 @@ import com.github.tmtsf.lox.scanner.Token;
 import com.github.tmtsf.lox.visitor.ExprVisitor;
 
 public class Assign extends Expr {
-  private final Token name;
+  private final Token token;
   private final Expr value;
 
-  public Assign(Token name, Expr value) {
-    this.name = name;
+  public Assign(Token token, Expr value) {
+    this.token = token;
     this.value = value;
   }
 
-  public Token getName() {
-    return name;
+  public Token getToken() {
+    return token;
   }
 
   public Expr getValue() {
