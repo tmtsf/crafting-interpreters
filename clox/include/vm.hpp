@@ -28,6 +28,7 @@ namespace clox {
       void disassemble(const std::string& name) const;
 
       InterpretResult interpret(void);
+      InterpretResult interpret(const std::string& source);
     private:
       const OpCode& readByte(void);
       const value_t& readConstant(void);

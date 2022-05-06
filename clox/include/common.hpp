@@ -6,6 +6,7 @@
 #include <variant>
 #include <memory>
 #include <stack>
+#include <unordered_map>
 
 namespace clox {
 

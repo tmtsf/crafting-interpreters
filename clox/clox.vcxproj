@@ -152,15 +152,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\chunk.cpp" />
+    <ClCompile Include="src\compiler.cpp" />
     <ClCompile Include="src\main.cpp">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Program\crafting-interpreters\clox\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\Program\crafting-interpreters\clox\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <ClCompile Include="src\scanner.cpp" />
     <ClCompile Include="src\vm.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\chunk.hpp" />
     <ClInclude Include="include\common.hpp" />
+    <ClInclude Include="include\compiler.hpp" />
+    <ClInclude Include="include\scanner.hpp" />
     <ClInclude Include="include\vm.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

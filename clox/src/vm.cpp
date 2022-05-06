@@ -1,5 +1,6 @@
 #include "vm.hpp"
 #include "chunk.hpp"
+#include "compiler.hpp"
 
 namespace clox {
   namespace vm {
@@ -62,6 +63,11 @@ namespace clox {
           return InterpretResult::INTERPRET_RUNTIME_ERROR;
         }
       }
+    }
+
+    InterpretResult VM::interpret(const std::string& source) {
+      clox::compiler::Compiler::compile(source);
+      return InterpretResult::INTERPRET_OK;
     }
 
     const OpCode& VM::readByte(void) {
