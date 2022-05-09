@@ -14,7 +14,7 @@ namespace clox {
       return m_Constants.size() - 1;
     }
 
-    void Chunk::disassemble(const std::string& name) const {
+    void Chunk::disassemble(const string_t& name) const {
       printf("== %s ==\n", name.c_str());
 
       for (size_t offset = 0; offset < m_ByteCodes.size(); )
@@ -39,32 +39,32 @@ namespace clox {
 
       auto instruction = std::get<OpCode>(m_ByteCodes[offset]);
       switch (instruction) {
-      case OpCode::OP_RETURN:
-        return simpleInstruction("OP_RETURN", offset);
-      case OpCode::OP_NEGATE:
-        return simpleInstruction("OP_NEGATE", offset);
-      case OpCode::OP_ADD:
-        return simpleInstruction("OP_ADD", offset);
-      case OpCode::OP_SUBTRACT:
-        return simpleInstruction("OP_SUBTRACT", offset);
-      case OpCode::OP_MULTIPLY:
-        return simpleInstruction("OP_MULTIPLY", offset);
-      case OpCode::OP_DIVIDE:
-        return simpleInstruction("OP_DIVIDE", offset);
-      case OpCode::OP_CONSTANT:
-        return constantInstruction("OP_CONSTANT", offset);
+      case OpCode::RETURN:
+        return simpleInstruction("RETURN", offset);
+      case OpCode::NEGATE:
+        return simpleInstruction("NEGATE", offset);
+      case OpCode::ADD:
+        return simpleInstruction("ADD", offset);
+      case OpCode::SUBTRACT:
+        return simpleInstruction("SUBTRACT", offset);
+      case OpCode::MULTIPLY:
+        return simpleInstruction("MULTIPLY", offset);
+      case OpCode::DIVIDE:
+        return simpleInstruction("DIVIDE", offset);
+      case OpCode::CONSTANT:
+        return constantInstruction("CONSTANT", offset);
       default:
         printf("Unknown opcode %d\n", instruction);
         return offset + 1;
       }
     }
 
-    size_t Chunk::simpleInstruction(const std::string& name, size_t offset) const {
+    size_t Chunk::simpleInstruction(const string_t& name, size_t offset) const {
       printf("%s\n", name.c_str());
       return offset + 1;
     }
 
-    size_t Chunk::constantInstruction(const std::string& name, size_t offset) const {
+    size_t Chunk::constantInstruction(const string_t& name, size_t offset) const {
       auto constant = std::get<size_t>(m_ByteCodes[offset + 1]);
       printf("%-16s %4zu '", name.c_str(), constant);
       printValue(m_Constants[constant]);

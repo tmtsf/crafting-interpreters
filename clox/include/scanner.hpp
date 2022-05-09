@@ -7,42 +7,70 @@ namespace clox {
 
     enum class TokenType {
       // Single-character tokens.
-      TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN,
-      TOKEN_LEFT_BRACE, TOKEN_RIGHT_BRACE,
-      TOKEN_COMMA, TOKEN_DOT, TOKEN_MINUS, TOKEN_PLUS,
-      TOKEN_SEMICOLON, TOKEN_SLASH, TOKEN_STAR,
-      // One or two character tokens.
-      TOKEN_BANG, TOKEN_BANG_EQUAL,
-      TOKEN_EQUAL, TOKEN_EQUAL_EQUAL,
-      TOKEN_GREATER, TOKEN_GREATER_EQUAL,
-      TOKEN_LESS, TOKEN_LESS_EQUAL,
-      // Literals.
-      TOKEN_IDENTIFIER, TOKEN_STRING, TOKEN_NUMBER,
-      // Keywords.
-      TOKEN_AND, TOKEN_CLASS, TOKEN_ELSE, TOKEN_FALSE,
-      TOKEN_FOR, TOKEN_FUN, TOKEN_IF, TOKEN_NIL, TOKEN_OR,
-      TOKEN_PRINT, TOKEN_RETURN, TOKEN_SUPER, TOKEN_THIS,
-      TOKEN_TRUE, TOKEN_VAR, TOKEN_WHILE,
+      LEFT_PAREN, 
+      RIGHT_PAREN,
+      LEFT_BRACE, 
+      RIGHT_BRACE,
+      COMMA, 
+      DOT, 
+      MINUS, 
+      PLUS,
+      SEMICOLON, 
+      SLASH, 
+      STAR,
 
-      TOKEN_ERROR, TOKEN_EOF
+      // One or two character tokens.
+      BANG, 
+      BANG_EQUAL,
+      EQUAL, 
+      EQUAL_EQUAL,
+      GREATER, 
+      GREATER_EQUAL,
+      LESS, 
+      LESS_EQUAL,
+
+      // Literals.
+      IDENTIFIER, 
+      STRING, 
+      NUMBER,
+
+      // Keywords.
+      AND, 
+      CLASS, 
+      ELSE, 
+      FALSE,
+      FOR, 
+      FUN, 
+      IF, 
+      NIL, 
+      OR,
+      PRINT, 
+      RETURN, 
+      SUPER, 
+      THIS,
+      TRUE, 
+      VAR, 
+      WHILE,
+
+      ERROR, 
+      END_OF_FILE,
     };
 
     struct Token {
       TokenType m_Type;
-      int m_Start;
-      int m_Length;
+      string_t m_Lexeme;
       int m_Line;
     };
 
     class Scanner {
     public:
-      Scanner(const std::string& source);
+      Scanner(const string_t& source);
       Token scan();
 
     private:
       bool isAtEnd(void) const;
       Token makeToken(const TokenType&) const;
-      Token errorToken(const std::string& message) const;
+      Token errorToken(const string_t& message) const;
       char advance(void);
       bool match(char expected);
       void skipWhitespace(void);
@@ -56,7 +84,7 @@ namespace clox {
       TokenType identifierType(void) const;
 
     private:
-      const std::string& m_Source;
+      const string_t& m_Source;
       int m_Start;
       int m_Current;
       int m_Line;

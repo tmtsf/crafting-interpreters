@@ -1,10 +1,11 @@
 #include "vm.hpp"
 #include "chunk.hpp"
+#include "common.hpp"
 #include <iostream>
 
 namespace {
   void repl(clox::vm::VM& vm) {
-    std::string line;
+    clox::string_t line;
     for ( ; ; ) {
       printf("> ");
 
@@ -26,37 +27,37 @@ namespace {
 int main(int argc, const char* argv[]) {
   clox::vm::VM vm;
 
-  if (argc == 1) {
-    repl(vm);
-  }
-  else if (argc == 2) {
-    runFile(vm, argv[1]);
-  }
-  else {
-    fprintf(stderr, "Usage: clox [path]\n");
-    exit(64);
-  }
+  //if (argc == 1) {
+  //  repl(vm);
+  //}
+  //else if (argc == 2) {
+  //  runFile(vm, argv[1]);
+  //}
+  //else {
+  //  fprintf(stderr, "Usage: clox [path]\n");
+  //  exit(64);
+  //}
 
-  size_t constant = vm.addConstant(1.2);
-  vm.write(clox::vm::OpCode::OP_CONSTANT, 123);
-  vm.write(constant, 123);
+  //size_t constant = vm.addConstant(1.2);
+  //vm.write(clox::vm::OpCode::CONSTANT, 123);
+  //vm.write(constant, 123);
 
-  constant = vm.addConstant(3.4);
-  vm.write(clox::vm::OpCode::OP_CONSTANT, 123);
-  vm.write(constant, 123);
+  //constant = vm.addConstant(3.4);
+  //vm.write(clox::vm::OpCode::CONSTANT, 123);
+  //vm.write(constant, 123);
 
-  vm.write(clox::vm::OpCode::OP_ADD, 123);
+  //vm.write(clox::vm::OpCode::ADD, 123);
 
-  constant = vm.addConstant(5.6);
-  vm.write(clox::vm::OpCode::OP_CONSTANT, 123);
-  vm.write(constant, 123);
+  //constant = vm.addConstant(5.6);
+  //vm.write(clox::vm::OpCode::CONSTANT, 123);
+  //vm.write(constant, 123);
 
-  vm.write(clox::vm::OpCode::OP_DIVIDE, 123);
-  vm.write(clox::vm::OpCode::OP_NEGATE, 123);
+  //vm.write(clox::vm::OpCode::DIVIDE, 123);
+  //vm.write(clox::vm::OpCode::NEGATE, 123);
 
-  vm.write(clox::vm::OpCode::OP_RETURN, 123);
+  //vm.write(clox::vm::OpCode::RETURN, 123);
 
-  vm.interpret();
+  vm.interpret("3 + 4 * 5 - 81 / 9");
 
   printf("\n");
   vm.disassemble("test chunk");

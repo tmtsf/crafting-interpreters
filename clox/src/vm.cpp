@@ -3,6 +3,8 @@
 #include "compiler.hpp"
 
 namespace clox {
+  using namespace compiler;
+
   namespace vm {
     VM::VM(void) :
       m_Chunk(std::make_shared<Chunk>()),
@@ -23,51 +25,20 @@ namespace clox {
       return m_Chunk->addConstant(value);
     }
 
-    void VM::disassemble(const std::string& name) const {
+    void VM::disassemble(const string_t& name) const {
       m_Chunk->disassemble(name);
     }
 
     InterpretResult VM::interpret(void) {
-      for ( ; ; ) {
-        OpCode instruction;
-        switch (instruction = readByte()) {
-        case OpCode::OP_CONSTANT: {
-          auto value = readConstant();
-          m_Stack.push(value);
-          break;
-        }
-        case OpCode::OP_NEGATE: {
-          auto value = m_Stack.top();
-          m_Stack.pop();
-          m_Stack.push(-value);
-          break;
-        }
-        case OpCode::OP_ADD:
-          binaryOp('+');
-          break;
-        case OpCode::OP_SUBTRACT:
-          binaryOp('-');
-          break;
-        case OpCode::OP_MULTIPLY:
-          binaryOp('*');
-          break;
-        case OpCode::OP_DIVIDE:
-          binaryOp('/');
-          break;
-        case OpCode::OP_RETURN:
-          m_Chunk->printValue(m_Stack.top());
-          m_Stack.pop();
-          printf("\n");
-          return InterpretResult::INTERPRET_OK;
-        default:
-          return InterpretResult::INTERPRET_RUNTIME_ERROR;
-        }
-      }
+      return run();
     }
 
-    InterpretResult VM::interpret(const std::string& source) {
-      clox::compiler::Compiler::compile(source);
-      return InterpretResult::INTERPRET_OK;
+    InterpretResult VM::interpret(const string_t& source) {
+      Compiler compiler(m_Chunk);
+      if (!compiler.compile(source))
+        return InterpretResult::COMPILE_ERROR;
+
+      return run();
     }
 
     const OpCode& VM::readByte(void) {
@@ -84,27 +55,65 @@ namespace clox {
     }
 
     void VM::binaryOp(char c) {
-      value_t right = m_Stack.top();
-      m_Stack.pop();
-      value_t left = m_Stack.top();
-      m_Stack.pop();
+      value_t right = m_Stack.back();
+      m_Stack.pop_back();
+      value_t left = m_Stack.back();
+      m_Stack.pop_back();
 
       switch (c) {
       case '+':
-        m_Stack.push(left + right);
+        m_Stack.push_back(left + right);
         break;
       case '-':
-        m_Stack.push(left - right);
+        m_Stack.push_back(left - right);
         break;
       case '*':
-        m_Stack.push(left * right);
+        m_Stack.push_back(left * right);
         break;
       case '/':
-        m_Stack.push(left / right);
+        m_Stack.push_back(left / right);
         break;
       default:
         throw("Unknown binary operator");
         break;
+      }
+    }
+
+    InterpretResult VM::run(void) {
+      for (; ; ) {
+        OpCode instruction;
+        switch (instruction = readByte()) {
+        case OpCode::CONSTANT: {
+          auto value = readConstant();
+          m_Stack.push_back(value);
+          break;
+        }
+        case OpCode::NEGATE: {
+          auto value = m_Stack.back();
+          m_Stack.pop_back();
+          m_Stack.push_back(-value);
+          break;
+        }
+        case OpCode::ADD:
+          binaryOp('+');
+          break;
+        case OpCode::SUBTRACT:
+          binaryOp('-');
+          break;
+        case OpCode::MULTIPLY:
+          binaryOp('*');
+          break;
+        case OpCode::DIVIDE:
+          binaryOp('/');
+          break;
+        case OpCode::RETURN:
+          m_Chunk->printValue(m_Stack.back());
+          m_Stack.pop_back();
+          printf("\n");
+          return InterpretResult::OK;
+        default:
+          return InterpretResult::RUNTIME_ERROR;
+        }
       }
     }
   }

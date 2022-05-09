@@ -1,11 +1,11 @@
 #pragma once
 
-#include <scanner.hpp>
+#include "scanner.hpp"
 
 namespace clox {
   namespace scanner {
 
-    Scanner::Scanner(const std::string& source) :
+    Scanner::Scanner(const string_t& source) :
       m_Source(source),
       m_Start(0),
       m_Current(0),
@@ -17,7 +17,7 @@ namespace clox {
       m_Start = m_Current;
 
       if (isAtEnd())
-        return makeToken(TokenType::TOKEN_EOF);
+        return makeToken(TokenType::END_OF_FILE);
 
       char c = advance();
       if (isDigit(c))
@@ -28,35 +28,35 @@ namespace clox {
       switch (c)
       {
       case '(':
-        return makeToken(TokenType::TOKEN_LEFT_PAREN);
+        return makeToken(TokenType::LEFT_PAREN);
       case ')':
-        return makeToken(TokenType::TOKEN_RIGHT_PAREN);
+        return makeToken(TokenType::RIGHT_PAREN);
       case '{':
-        return makeToken(TokenType::TOKEN_LEFT_BRACE);
+        return makeToken(TokenType::LEFT_BRACE);
       case '}':
-        return makeToken(TokenType::TOKEN_RIGHT_BRACE);
+        return makeToken(TokenType::RIGHT_BRACE);
       case ';':
-        return makeToken(TokenType::TOKEN_SEMICOLON);
+        return makeToken(TokenType::SEMICOLON);
       case ',':
-        return makeToken(TokenType::TOKEN_COMMA);
+        return makeToken(TokenType::COMMA);
       case '.':
-        return makeToken(TokenType::TOKEN_DOT);
+        return makeToken(TokenType::DOT);
       case '+':
-        return makeToken(TokenType::TOKEN_PLUS);
+        return makeToken(TokenType::PLUS);
       case '-':
-        return makeToken(TokenType::TOKEN_MINUS);
+        return makeToken(TokenType::MINUS);
       case '*':
-        return makeToken(TokenType::TOKEN_STAR);
+        return makeToken(TokenType::STAR);
       case '/':
-        return makeToken(TokenType::TOKEN_SLASH);
+        return makeToken(TokenType::SLASH);
       case '!':
-        return makeToken(match('=') ? TokenType::TOKEN_BANG_EQUAL : TokenType::TOKEN_BANG);
+        return makeToken(match('=') ? TokenType::BANG_EQUAL : TokenType::BANG);
       case '=':
-        return makeToken(match('=') ? TokenType::TOKEN_EQUAL_EQUAL : TokenType::TOKEN_EQUAL);
+        return makeToken(match('=') ? TokenType::EQUAL_EQUAL : TokenType::EQUAL);
       case '<':
-        return makeToken(match('=') ? TokenType::TOKEN_LESS_EQUAL : TokenType::TOKEN_LESS);
+        return makeToken(match('=') ? TokenType::LESS_EQUAL : TokenType::LESS);
       case '>':
-        return makeToken(match('=') ? TokenType::TOKEN_GREATER_EQUAL : TokenType::TOKEN_GREATER);
+        return makeToken(match('=') ? TokenType::GREATER_EQUAL : TokenType::GREATER);
       case '"':
         return string();
       default:
@@ -72,11 +72,11 @@ namespace clox {
     }
 
     Token Scanner::makeToken(const TokenType& type) const {
-      return Token(type, m_Start, m_Current - m_Start, m_Line);
+      return Token(type, m_Source.substr(m_Start, m_Current - m_Start), m_Line);
     }
 
-    Token Scanner::errorToken(const std::string& message) const {
-      return Token(TokenType::TOKEN_ERROR, m_Start, m_Current - m_Start, m_Line);
+    Token Scanner::errorToken(const string_t& message) const {
+      return Token(TokenType::ERROR, message, m_Line);
     }
 
     char Scanner::advance(void) {
@@ -146,7 +146,7 @@ namespace clox {
         return errorToken("Unterminated string.");
 
       advance();
-      return makeToken(TokenType::TOKEN_STRING);
+      return makeToken(TokenType::STRING);
     }
 
     bool Scanner::isDigit(char c) const {
@@ -163,7 +163,7 @@ namespace clox {
           advance();
       }
 
-      return makeToken(TokenType::TOKEN_NUMBER);
+      return makeToken(TokenType::NUMBER);
     }
 
     bool Scanner::isAlpha(char c) const {
@@ -180,33 +180,33 @@ namespace clox {
     }
 
     namespace {
-      std::unordered_map<std::string, TokenType> m =
+      std::unordered_map<string_t, TokenType> m =
       {
-        {"and",    TokenType::TOKEN_AND},
-        {"class",  TokenType::TOKEN_CLASS},
-        {"else",   TokenType::TOKEN_ELSE},
-        {"if",     TokenType::TOKEN_IF},
-        {"nil",    TokenType::TOKEN_NIL},
-        {"or",     TokenType::TOKEN_OR},
-        {"print",  TokenType::TOKEN_PRINT},
-        {"return", TokenType::TOKEN_RETURN},
-        {"super",  TokenType::TOKEN_SUPER},
-        {"var",    TokenType::TOKEN_VAR},
-        {"while",  TokenType::TOKEN_WHILE},
-        {"false",  TokenType::TOKEN_FALSE},
-        {"for",    TokenType::TOKEN_FOR},
-        {"fun",    TokenType::TOKEN_FUN},
-        {"this",   TokenType::TOKEN_THIS},
-        {"true",   TokenType::TOKEN_TRUE}
+        {"and",    TokenType::AND},
+        {"class",  TokenType::CLASS},
+        {"else",   TokenType::ELSE},
+        {"if",     TokenType::IF},
+        {"nil",    TokenType::NIL},
+        {"or",     TokenType::OR},
+        {"print",  TokenType::PRINT},
+        {"return", TokenType::RETURN},
+        {"super",  TokenType::SUPER},
+        {"var",    TokenType::VAR},
+        {"while",  TokenType::WHILE},
+        {"false",  TokenType::FALSE},
+        {"for",    TokenType::FOR},
+        {"fun",    TokenType::FUN},
+        {"this",   TokenType::THIS},
+        {"true",   TokenType::TRUE}
       };
     }
 
     TokenType Scanner::identifierType(void) const {
-      std::string lexeme = m_Source.substr(m_Start, m_Current - m_Start);
+      string_t lexeme = m_Source.substr(m_Start, m_Current - m_Start);
       if (m.count(lexeme))
         return m[lexeme];
 
-      return TokenType::TOKEN_IDENTIFIER;
+      return TokenType::IDENTIFIER;
     }
   }
 }

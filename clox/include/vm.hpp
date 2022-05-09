@@ -3,11 +3,12 @@
 #include "common.hpp"
 
 namespace clox {
+
   namespace vm {
     enum class InterpretResult {
-      INTERPRET_OK,
-      INTERPRET_COMPILE_ERROR,
-      INTERPRET_RUNTIME_ERROR,
+      OK,
+      COMPILE_ERROR,
+      RUNTIME_ERROR,
     };
 
     class VM {
@@ -25,14 +26,15 @@ namespace clox {
       void write(const byte_code_t& code,
                  int line);
       size_t addConstant(const value_t& value);
-      void disassemble(const std::string& name) const;
+      void disassemble(const string_t& name) const;
 
       InterpretResult interpret(void);
-      InterpretResult interpret(const std::string& source);
+      InterpretResult interpret(const string_t& source);
     private:
       const OpCode& readByte(void);
       const value_t& readConstant(void);
       void binaryOp(char c);
+      InterpretResult run(void);
     private:
       chunk_ptr_t m_Chunk;
       size_t m_IP; // Instruction pointer
