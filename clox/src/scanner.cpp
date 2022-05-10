@@ -5,12 +5,12 @@
 namespace clox {
   namespace scanner {
 
-    Scanner::Scanner(const string_t& source) :
-      m_Source(source),
-      m_Start(0),
-      m_Current(0),
-      m_Line(1)
-    { }
+    void Scanner::set(const string_t& source) {
+      m_Source = source;
+      m_Start = 0;
+      m_Current = 0;
+      m_Line = 1;
+    }
 
     Token Scanner::scan() {
       skipWhitespace();

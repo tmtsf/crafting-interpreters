@@ -29,24 +29,25 @@ namespace clox {
 
     Compiler::Compiler(const chunk_ptr_t& chunk) :
       m_Chunk(chunk),
-      m_Parser()
+      m_Parser(),
+      m_Scanner()
     { }
 
     bool Compiler::compile(const string_t& source) {
-      Scanner scanner(source);
-      advance(scanner);
-      expression(scanner);
-      consume(scanner, TokenType::END_OF_FILE, "Expect end of expression.");
+      m_Scanner.set(source);
+      advance();
+      expression();
+      consume(TokenType::END_OF_FILE, "Expect end of expression.");
       endCompiler();
 
       return !m_Parser.m_HadError;
     }
 
-    void Compiler::advance(Scanner& scanner) {
+    void Compiler::advance(void) {
       m_Parser.m_Prev = m_Parser.m_Curr;
 
       while (true) {
-        m_Parser.m_Curr = scanner.scan();
+        m_Parser.m_Curr = m_Scanner.scan();
         if (m_Parser.m_Curr.m_Type != TokenType::ERROR)
           break;
 
@@ -54,13 +55,13 @@ namespace clox {
       }
     }
 
-    void Compiler::expression(Scanner& scanner) {
-      parse(Precedence::ASSIGNMENT, scanner);
+    void Compiler::expression(void) {
+      parse(Precedence::ASSIGNMENT);
     }
 
-    void Compiler::consume(Scanner& scanner, const TokenType& type, const string_t& message) {
+    void Compiler::consume(const TokenType& type, const string_t& message) {
       if (m_Parser.m_Curr.m_Type == type) {
-        advance(scanner);
+        advance();
         return;
       }
 
@@ -98,7 +99,7 @@ namespace clox {
     }
 
     void Compiler::emitBytes(const byte_code_vec_t& codes) {
-      for (auto code : codes)
+      for (const auto& code : codes)
         emitByte(code);
     }
 
@@ -166,20 +167,20 @@ namespace clox {
       return rules;
     }
 
-    void Compiler::number(Scanner& /* not used */) {
+    void Compiler::number(void) {
       dbl_t value = std::stod(m_Parser.m_Prev.m_Lexeme);
       emitConstant(value);
     }
 
-    void Compiler::grouping(Scanner& scanner) {
-      expression(scanner);
-      consume(scanner, TokenType::RIGHT_PAREN, "Expect ')' after expression.");
+    void Compiler::grouping(void) {
+      expression();
+      consume(TokenType::RIGHT_PAREN, "Expect ')' after expression.");
     }
 
-    void Compiler::unary(Scanner& scanner) {
+    void Compiler::unary(void) {
       TokenType type = m_Parser.m_Prev.m_Type;
 
-      parse(Precedence::UNARY, scanner);
+      parse(Precedence::UNARY);
 
       switch (type) {
       case TokenType::MINUS:
@@ -194,10 +195,10 @@ namespace clox {
       }
     }
 
-    void Compiler::binary(Scanner& scanner) {
+    void Compiler::binary(void) {
       TokenType type = m_Parser.m_Prev.m_Type;
       const ParseRule& rule = parseRule(type);
-      parse(static_cast<Precedence>(static_cast<int>(rule.m_Prec) + 1), scanner);
+      parse(static_cast<Precedence>(static_cast<int>(rule.m_Prec) + 1));
 
       switch (type) {
       case TokenType::PLUS:
@@ -235,7 +236,7 @@ namespace clox {
       }
     }
 
-    void Compiler::literal(Scanner& scanner) {
+    void Compiler::literal(void) {
       switch (m_Parser.m_Prev.m_Type) {
       case TokenType::FALSE:
         emitByte(OpCode::FALSE);
@@ -255,20 +256,20 @@ namespace clox {
       return getParseRules()[type];
     }
 
-    void Compiler::parse(const Precedence& prec, Scanner& scanner) {
-      advance(scanner);
+    void Compiler::parse(const Precedence& prec) {
+      advance();
       parse_func_t prefix = parseRule(m_Parser.m_Prev.m_Type).m_Prefix;
       if (!prefix) {
         error("Expect expression.");
         return;
       }
 
-      (this->*prefix)(scanner);
+      (this->*prefix)();
 
       while (prec <= parseRule(m_Parser.m_Curr.m_Type).m_Prec) {
-        advance(scanner);
+        advance();
         parse_func_t infix = parseRule(m_Parser.m_Prev.m_Type).m_Infix;
-        (this->*infix)(scanner);
+        (this->*infix)();
       }
     }
   }

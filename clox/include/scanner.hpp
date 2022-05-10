@@ -64,8 +64,9 @@ namespace clox {
 
     class Scanner {
     public:
-      Scanner(const string_t& source);
+      Scanner(void) = default;
       Token scan();
+      void set(const string_t& source);
 
     private:
       bool isAtEnd(void) const;
@@ -84,7 +85,7 @@ namespace clox {
       TokenType identifierType(void) const;
 
     private:
-      const string_t& m_Source;
+      string_t m_Source;
       int m_Start;
       int m_Current;
       int m_Line;

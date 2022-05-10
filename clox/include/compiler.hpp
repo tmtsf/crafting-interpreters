@@ -37,7 +37,7 @@ namespace clox {
       PRIMARY,
     };
 
-    using parse_func_t = void (Compiler::*)(Scanner&);
+    using parse_func_t = void (Compiler::*)(void);
 
     struct ParseRule {
       parse_func_t m_Prefix;
@@ -62,9 +62,9 @@ namespace clox {
       Compiler(const chunk_ptr_t& chunk);
       bool compile(const string_t& source);
     private:
-      void advance(Scanner& scanner);
-      void expression(Scanner& scanner);
-      void consume(Scanner& scanner, const TokenType& type, const string_t& message);
+      void advance(void);
+      void expression(void);
+      void consume(const TokenType& type, const string_t& message);
 
       void errorAtCurrent(const char* message);
       void error(const char* message);
@@ -79,19 +79,20 @@ namespace clox {
 
       size_t makeConstant(const value_t& value);
 
-      void number(Scanner& scanner);
-      void grouping(Scanner& scanner);
-      void unary(Scanner& scanner);
-      void binary(Scanner& scanner);
-      void literal(Scanner& scanner);
+      void number(void);
+      void grouping(void);
+      void unary(void);
+      void binary(void);
+      void literal(void);
 
-      void parse(const Precedence& prec, Scanner& scanner);
+      void parse(const Precedence& prec);
 
       static parse_rule_table_t getParseRules(void);
       ParseRule parseRule(const TokenType& type);
     private:
       chunk_ptr_t m_Chunk;
       Parser m_Parser;
+      Scanner m_Scanner;
     };
   }
 }
