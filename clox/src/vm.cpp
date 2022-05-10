@@ -16,19 +16,6 @@ namespace clox {
       m_IP(0)
     { }
 
-    void VM::write(const byte_code_t& code,
-                   int line) {
-      m_Chunk->write(code, line);
-    }
-
-    size_t VM::addConstant(const value_t& value) {
-      return m_Chunk->addConstant(value);
-    }
-
-    void VM::disassemble(const string_t& name) const {
-      m_Chunk->disassemble(name);
-    }
-
     InterpretResult VM::interpret(void) {
       return run();
     }
@@ -37,6 +24,9 @@ namespace clox {
       Compiler compiler(m_Chunk);
       if (!compiler.compile(source))
         return InterpretResult::COMPILE_ERROR;
+
+      m_Chunk->disassemble("debug chunk");
+      printf("\n\n");
 
       return run();
     }
@@ -80,7 +70,7 @@ namespace clox {
     }
 
     InterpretResult VM::run(void) {
-      for (; ; ) {
+      while (true) {
         OpCode instruction;
         switch (instruction = readByte()) {
         case OpCode::CONSTANT: {

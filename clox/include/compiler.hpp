@@ -45,7 +45,16 @@ namespace clox {
       Precedence m_Prec;
     };
 
-    using parse_rule_table_t = std::vector<ParseRule>;
+    namespace {
+      struct Hash {
+        template<typename T>
+        size_t operator()(const T& t) const {
+          return static_cast<size_t>(t);
+        }
+      };
+    }
+
+    using parse_rule_table_t = std::unordered_map<TokenType, ParseRule, Hash>;
 
     class Compiler {
     public:

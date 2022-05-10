@@ -23,11 +23,6 @@ namespace clox {
       VM& operator=(const VM&) = delete;
       VM& operator=(VM&&) = delete;
 
-      void write(const byte_code_t& code,
-                 int line);
-      size_t addConstant(const value_t& value);
-      void disassemble(const string_t& name) const;
-
       InterpretResult interpret(void);
       InterpretResult interpret(const string_t& source);
     private:

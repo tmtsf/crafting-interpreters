@@ -121,46 +121,46 @@ namespace clox {
 
     parse_rule_table_t Compiler::getParseRules(void) {
       static parse_rule_table_t rules = {
-        {&Compiler::grouping, nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {&Compiler::unary,    &Compiler::binary, Precedence::TERM},
-        {nullptr,     &Compiler::binary, Precedence::TERM},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     &Compiler::binary, Precedence::FACTOR},
-        {nullptr,     &Compiler::binary, Precedence::FACTOR},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {&Compiler::number,   nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE},
-        {nullptr,     nullptr,   Precedence::NONE}
+        {TokenType::LEFT_PAREN,       {&Compiler::grouping,   nullptr,              Precedence::NONE}},
+        {TokenType::RIGHT_PAREN,      {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::LEFT_BRACE,       {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::RIGHT_BRACE,      {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::COMMA,            {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::DOT,              {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::MINUS,            {&Compiler::unary,      &Compiler::binary,    Precedence::TERM}},
+        {TokenType::PLUS,             {&Compiler::unary,      &Compiler::binary,    Precedence::TERM}},
+        {TokenType::SEMICOLON,        {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::SLASH,            {nullptr,               &Compiler::binary,    Precedence::FACTOR}},
+        {TokenType::STAR,             {nullptr,               &Compiler::binary,    Precedence::FACTOR}},
+        {TokenType::BANG,             {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::BANG_EQUAL,       {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::EQUAL,            {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::EQUAL_EQUAL,      {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::GREATER,          {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::GREATER_EQUAL,    {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::LESS,             {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::LESS_EQUAL,       {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::IDENTIFIER,       {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::STRING,           {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::NUMBER,           {&Compiler::number,     nullptr,              Precedence::NONE}},
+        {TokenType::AND,              {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::CLASS,            {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::ELSE,             {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::FALSE,            {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::FOR,              {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::FUN,              {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::IF,               {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::NIL,              {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::OR,               {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::PRINT,            {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::RETURN,           {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::SUPER,            {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::THIS,             {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::TRUE,             {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::VAR,              {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::WHILE,            {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::ERROR,            {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::END_OF_FILE,      {nullptr,               nullptr,              Precedence::NONE}}
       };
 
       return rules;
@@ -185,6 +185,7 @@ namespace clox {
       case TokenType::MINUS:
         emitByte(OpCode::NEGATE);
         break;
+      case TokenType::PLUS:
       default:
         return;
       }
@@ -214,7 +215,7 @@ namespace clox {
     }
 
     ParseRule Compiler::parseRule(const TokenType& type) {
-      return getParseRules()[static_cast<int>(type)];
+      return getParseRules()[type];
     }
 
     void Compiler::parse(const Precedence& prec, Scanner& scanner) {

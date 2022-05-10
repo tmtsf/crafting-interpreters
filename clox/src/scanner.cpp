@@ -95,7 +95,7 @@ namespace clox {
     }
 
     void Scanner::skipWhitespace(void) {
-      for ( ; ; ) {
+      while (true) {
         char c = peek();
         switch (c)
         {
@@ -129,7 +129,7 @@ namespace clox {
     }
 
     char Scanner::peekNext(void) const {
-      if (m_Current < m_Source.size() - 1)
+      if (m_Current == m_Source.size() - 1)
         return '\0';
 
       return m_Source[m_Current + 1];
