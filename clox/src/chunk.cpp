@@ -51,8 +51,22 @@ namespace clox {
         return simpleInstruction("MULTIPLY", offset);
       case OpCode::DIVIDE:
         return simpleInstruction("DIVIDE", offset);
+      case OpCode::NIL:
+        return simpleInstruction("NIL", offset);
+      case OpCode::FALSE:
+        return simpleInstruction("FALSE", offset);
+      case OpCode::TRUE:
+        return simpleInstruction("TRUE", offset);
       case OpCode::CONSTANT:
         return constantInstruction("CONSTANT", offset);
+      case OpCode::NOT:
+        return simpleInstruction("NOT", offset);
+      case OpCode::EQUAL:
+        return simpleInstruction("EQUAL", offset);
+      case OpCode::GREATER:
+        return simpleInstruction("GREATER", offset);
+      case OpCode::LESS:
+        return simpleInstruction("LESS", offset);
       default:
         printf("Unknown opcode %d\n", instruction);
         return offset + 1;
@@ -73,8 +87,16 @@ namespace clox {
       return offset + 2;
     }
 
+    // todo: use visitor pattern to print for specific types
     void Chunk::printValue(const value_t& value) const {
-      printf("%g", value);
+      std::visit(
+        util::overloaded {
+          [](dbl_t x) { printf("%g", x);  },
+          [](bool x) { printf("%s", x ? "true" : "false"); },
+          [](nullptr_t x) { printf("nil"); }
+        },
+        value
+      );
     }
   }
 }

@@ -45,9 +45,16 @@ namespace clox {
     }
 
     void VM::binaryOp(char c) {
-      value_t right = m_Stack.back();
+      auto r = peek(0);
+      auto l = peek(1);
+      if (!std::holds_alternative<dbl_t>(r) || !std::holds_alternative<dbl_t>(l)) {
+        fprintf(stderr, "Operands must be numbers.");
+        throw;
+      }
+
+      dbl_t right = std::get<dbl_t>(peek(0));
+      dbl_t left = std::get<dbl_t>(peek(1));
       m_Stack.pop_back();
-      value_t left = m_Stack.back();
       m_Stack.pop_back();
 
       switch (c) {
@@ -63,6 +70,12 @@ namespace clox {
       case '/':
         m_Stack.push_back(left / right);
         break;
+      case '>':
+        m_Stack.push_back(left > right);
+        break;
+      case '<':
+        m_Stack.push_back(left < right);
+        break;
       default:
         throw("Unknown binary operator");
         break;
@@ -74,14 +87,14 @@ namespace clox {
         OpCode instruction;
         switch (instruction = readByte()) {
         case OpCode::CONSTANT: {
-          auto value = readConstant();
+          const value_t& value = readConstant();
           m_Stack.push_back(value);
           break;
         }
         case OpCode::NEGATE: {
-          auto value = m_Stack.back();
+          dbl_t value = -std::get<dbl_t>(peek(0));
           m_Stack.pop_back();
-          m_Stack.push_back(-value);
+          m_Stack.push_back(value);
           break;
         }
         case OpCode::ADD:
@@ -101,10 +114,69 @@ namespace clox {
           m_Stack.pop_back();
           printf("\n");
           return InterpretResult::OK;
+        case OpCode::NIL:
+          m_Stack.push_back(nullptr);
+          break;
+        case OpCode::FALSE:
+          m_Stack.push_back(false);
+          break;
+        case OpCode::TRUE:
+          m_Stack.push_back(true);
+          break;
+        case OpCode::NOT: {
+          bool value = isFalsey(peek(0));
+          m_Stack.pop_back();
+          m_Stack.push_back(value);
+          break;
+        }
+        case OpCode::EQUAL: {
+          const value_t& right = peek(0);
+          const value_t& left = peek(1);
+          bool value = areEqual(left, right);
+          m_Stack.pop_back();
+          m_Stack.pop_back();
+          m_Stack.push_back(value);
+          break;
+        }
+        case OpCode::GREATER:
+          binaryOp('>');
+          break;
+        case OpCode::LESS:
+          binaryOp('<');
+          break;
         default:
           return InterpretResult::RUNTIME_ERROR;
         }
       }
+    }
+
+    const value_t& VM::peek(size_t offset) const {
+      return *(m_Stack.crbegin() + offset);
+    }
+
+    bool VM::isFalsey(const value_t& value) const {
+      return std::visit(
+        util::overloaded{
+          [](dbl_t x) { return x != 0.; },
+          [](bool x) { return !x; },
+          [](nullptr_t x) { return true; }
+        },
+        value
+      );
+    }
+
+    bool VM::areEqual(const value_t& left, const value_t& right) const {
+      if (left.index() != right.index())
+        return false;
+
+      if (std::holds_alternative<bool>(left))
+        return std::get<bool>(left) == std::get<bool>(right);
+      else if (std::holds_alternative<dbl_t>(left))
+        return std::get<dbl_t>(left) == std::get<dbl_t>(right);
+      else if (std::holds_alternative<nullptr_t>(left))
+        return true;
+      else
+        return false;
     }
   }
 }

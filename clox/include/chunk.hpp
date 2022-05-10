@@ -12,6 +12,13 @@ namespace clox {
       SUBTRACT,
       MULTIPLY,
       DIVIDE,
+      NIL,
+      TRUE,
+      FALSE,
+      NOT,
+      EQUAL,
+      GREATER,
+      LESS
     };
 
     class Chunk {

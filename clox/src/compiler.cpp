@@ -102,7 +102,7 @@ namespace clox {
         emitByte(code);
     }
 
-    void Compiler::emitConstant(dbl_t value) {
+    void Compiler::emitConstant(const value_t& value) {
       emitBytes({ OpCode::CONSTANT, makeConstant(value) });
     }
 
@@ -114,7 +114,7 @@ namespace clox {
       emitReturn();
     }
 
-    size_t Compiler::makeConstant(dbl_t value) {
+    size_t Compiler::makeConstant(const value_t& value) {
       size_t offset = m_Chunk->addConstant(value);
       return offset;
     }
@@ -132,31 +132,31 @@ namespace clox {
         {TokenType::SEMICOLON,        {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::SLASH,            {nullptr,               &Compiler::binary,    Precedence::FACTOR}},
         {TokenType::STAR,             {nullptr,               &Compiler::binary,    Precedence::FACTOR}},
-        {TokenType::BANG,             {nullptr,               nullptr,              Precedence::NONE}},
-        {TokenType::BANG_EQUAL,       {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::BANG,             {&Compiler::unary,      nullptr,              Precedence::NONE}},
+        {TokenType::BANG_EQUAL,       {nullptr,               &Compiler::binary,    Precedence::EQUALITY}},
         {TokenType::EQUAL,            {nullptr,               nullptr,              Precedence::NONE}},
-        {TokenType::EQUAL_EQUAL,      {nullptr,               nullptr,              Precedence::NONE}},
-        {TokenType::GREATER,          {nullptr,               nullptr,              Precedence::NONE}},
-        {TokenType::GREATER_EQUAL,    {nullptr,               nullptr,              Precedence::NONE}},
-        {TokenType::LESS,             {nullptr,               nullptr,              Precedence::NONE}},
-        {TokenType::LESS_EQUAL,       {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::EQUAL_EQUAL,      {nullptr,               &Compiler::binary,    Precedence::EQUALITY}},
+        {TokenType::GREATER,          {nullptr,               &Compiler::binary,    Precedence::COMPARISON}},
+        {TokenType::GREATER_EQUAL,    {nullptr,               &Compiler::binary,    Precedence::COMPARISON}},
+        {TokenType::LESS,             {nullptr,               &Compiler::binary,    Precedence::COMPARISON}},
+        {TokenType::LESS_EQUAL,       {nullptr,               &Compiler::binary,    Precedence::COMPARISON}},
         {TokenType::IDENTIFIER,       {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::STRING,           {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::NUMBER,           {&Compiler::number,     nullptr,              Precedence::NONE}},
         {TokenType::AND,              {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::CLASS,            {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::ELSE,             {nullptr,               nullptr,              Precedence::NONE}},
-        {TokenType::FALSE,            {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::FALSE,            {&Compiler::literal,    nullptr,              Precedence::NONE}},
         {TokenType::FOR,              {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::FUN,              {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::IF,               {nullptr,               nullptr,              Precedence::NONE}},
-        {TokenType::NIL,              {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::NIL,              {&Compiler::literal,    nullptr,              Precedence::NONE}},
         {TokenType::OR,               {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::PRINT,            {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::RETURN,           {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::SUPER,            {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::THIS,             {nullptr,               nullptr,              Precedence::NONE}},
-        {TokenType::TRUE,             {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::TRUE,             {&Compiler::literal,    nullptr,              Precedence::NONE}},
         {TokenType::VAR,              {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::WHILE,            {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::ERROR,            {nullptr,               nullptr,              Precedence::NONE}},
@@ -185,6 +185,9 @@ namespace clox {
       case TokenType::MINUS:
         emitByte(OpCode::NEGATE);
         break;
+      case TokenType::BANG:
+        emitByte(OpCode::NOT);
+        break;
       case TokenType::PLUS:
       default:
         return;
@@ -209,8 +212,42 @@ namespace clox {
       case TokenType::SLASH:
         emitByte(OpCode::DIVIDE);
         break;
+      case TokenType::BANG_EQUAL:
+        emitBytes({ OpCode::EQUAL, OpCode::NOT });
+        break;
+      case TokenType::EQUAL_EQUAL:
+        emitByte(OpCode::EQUAL);
+        break;
+      case TokenType::GREATER:
+        emitByte(OpCode::GREATER);
+        break;
+      case TokenType::GREATER_EQUAL:
+        emitBytes({ OpCode::LESS, OpCode::NOT });
+        break;
+      case TokenType::LESS:
+        emitByte(OpCode::LESS);
+        break;
+      case TokenType::LESS_EQUAL:
+        emitBytes({ OpCode::GREATER, OpCode::NOT });
+        break;
       default:
         return;
+      }
+    }
+
+    void Compiler::literal(Scanner& scanner) {
+      switch (m_Parser.m_Prev.m_Type) {
+      case TokenType::FALSE:
+        emitByte(OpCode::FALSE);
+        break;
+      case TokenType::NIL:
+        emitByte(OpCode::NIL);
+        break;
+      case TokenType::TRUE:
+        emitByte(OpCode::TRUE);
+        break;
+      default:
+        break;
       }
     }
 

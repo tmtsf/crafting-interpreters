@@ -73,16 +73,17 @@ namespace clox {
     private:
       void emitByte(const byte_code_t& code);
       void emitBytes(const byte_code_vec_t& codes);
-      void emitConstant(dbl_t value);
+      void emitConstant(const value_t& value);
       void emitReturn(void);
       void endCompiler(void);
 
-      size_t makeConstant(dbl_t value);
+      size_t makeConstant(const value_t& value);
 
       void number(Scanner& scanner);
       void grouping(Scanner& scanner);
       void unary(Scanner& scanner);
       void binary(Scanner& scanner);
+      void literal(Scanner& scanner);
 
       void parse(const Precedence& prec, Scanner& scanner);
 

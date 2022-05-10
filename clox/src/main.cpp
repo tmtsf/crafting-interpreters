@@ -38,7 +38,7 @@ int main(int argc, const char* argv[]) {
   //  exit(64);
   //}
 
-  vm.interpret("3.2 + 4.6 * 5.7 - +81.1 / 9.3");
+  vm.interpret("!(5 - 4 > 3 * 2 == !nil)");
 
   return 0;
 }

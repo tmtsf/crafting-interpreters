@@ -30,6 +30,10 @@ namespace clox {
       const value_t& readConstant(void);
       void binaryOp(char c);
       InterpretResult run(void);
+      const value_t& peek(size_t offset) const;
+
+      bool isFalsey(const value_t& value) const;
+      bool areEqual(const value_t& left, const value_t& right) const;
     private:
       chunk_ptr_t m_Chunk;
       size_t m_IP; // Instruction pointer
