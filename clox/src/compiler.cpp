@@ -3,6 +3,7 @@
 #include "compiler.hpp"
 #include "scanner.hpp"
 #include "chunk.hpp"
+#include "object.hpp"
 
 namespace clox {
   namespace compiler {
@@ -142,7 +143,7 @@ namespace clox {
         {TokenType::LESS,             {nullptr,               &Compiler::binary,    Precedence::COMPARISON}},
         {TokenType::LESS_EQUAL,       {nullptr,               &Compiler::binary,    Precedence::COMPARISON}},
         {TokenType::IDENTIFIER,       {nullptr,               nullptr,              Precedence::NONE}},
-        {TokenType::STRING,           {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::STRING,           {&Compiler::string,     nullptr,              Precedence::NONE}},
         {TokenType::NUMBER,           {&Compiler::number,     nullptr,              Precedence::NONE}},
         {TokenType::AND,              {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::CLASS,            {nullptr,               nullptr,              Precedence::NONE}},
@@ -250,6 +251,12 @@ namespace clox {
       default:
         break;
       }
+    }
+
+    void Compiler::string(void) {
+      emitConstant(clox::obj::Object::formStringObject(
+                        string_t(m_Parser.m_Prev.m_Lexeme.cbegin() + 1U,
+                                 m_Parser.m_Prev.m_Lexeme.cend() - 1U)));
     }
 
     ParseRule Compiler::parseRule(const TokenType& type) {

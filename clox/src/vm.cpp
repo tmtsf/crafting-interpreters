@@ -1,9 +1,11 @@
 #include "vm.hpp"
 #include "chunk.hpp"
 #include "compiler.hpp"
+#include "object.hpp"
 
 namespace clox {
   using namespace compiler;
+  using namespace obj;
 
   namespace vm {
     VM::VM(void) :
@@ -44,22 +46,48 @@ namespace clox {
       return constants[offset];
     }
 
+    void VM::binaryAdd(void) {
+      value_t r = peek(0);
+      value_t l = peek(1);
+
+      m_Stack.pop_back();
+      m_Stack.pop_back();
+
+      if (std::holds_alternative<dbl_t>(r) || std::holds_alternative<dbl_t>(l)) {
+        dbl_t right = std::get<dbl_t>(r);
+        dbl_t left = std::get<dbl_t>(l);
+        m_Stack.push_back(left + right);
+        return;
+      }
+      else if (std::holds_alternative<obj_ptr_t>(r) || std::holds_alternative<obj_ptr_t>(l)) {
+        auto pL = dynamic_cast<string_ptr_t>(std::get<obj_ptr_t>(l));
+        auto pR = dynamic_cast<string_ptr_t>(std::get<obj_ptr_t>(r));
+        if (pL && pR)
+          m_Stack.push_back(Object::formStringObject(pL->getString() + pR->getString()));
+
+        return;
+      }
+
+      fprintf(stderr, "Operands for '+' must be either numbers or strings.");
+      throw;
+    }
+
     void VM::binaryOp(char c) {
-      auto r = peek(0);
-      auto l = peek(1);
+      const auto& r = peek(0);
+      const auto& l = peek(1);
       if (!std::holds_alternative<dbl_t>(r) || !std::holds_alternative<dbl_t>(l)) {
         fprintf(stderr, "Operands must be numbers.");
         throw;
       }
 
-      dbl_t right = std::get<dbl_t>(peek(0));
-      dbl_t left = std::get<dbl_t>(peek(1));
+      dbl_t right = std::get<dbl_t>(r);
+      dbl_t left = std::get<dbl_t>(l);
       m_Stack.pop_back();
       m_Stack.pop_back();
 
       switch (c) {
       case '+':
-        m_Stack.push_back(left + right);
+        binaryAdd();
         break;
       case '-':
         m_Stack.push_back(left - right);
@@ -98,7 +126,7 @@ namespace clox {
           break;
         }
         case OpCode::ADD:
-          binaryOp('+');
+          binaryAdd();
           break;
         case OpCode::SUBTRACT:
           binaryOp('-');
@@ -175,8 +203,14 @@ namespace clox {
         return std::get<dbl_t>(left) == std::get<dbl_t>(right);
       else if (std::holds_alternative<nullptr_t>(left))
         return true;
-      else
-        return false;
+      else if (std::holds_alternative<obj_ptr_t>(left)) {
+        auto pL = dynamic_cast<string_ptr_t>(std::get<obj_ptr_t>(left));
+        auto pR = dynamic_cast<string_ptr_t>(std::get<obj_ptr_t>(right));
+        if (pL && pR)
+          return pL->getString().compare(pR->getString()) == 0;
+      }
+
+      return false;
     }
   }
 }

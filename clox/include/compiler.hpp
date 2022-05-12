@@ -84,6 +84,7 @@ namespace clox {
       void unary(void);
       void binary(void);
       void literal(void);
+      void string(void);
 
       void parse(const Precedence& prec);
 

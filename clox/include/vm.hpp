@@ -28,6 +28,7 @@ namespace clox {
     private:
       const OpCode& readByte(void);
       const value_t& readConstant(void);
+      void binaryAdd(void);
       void binaryOp(char c);
       InterpretResult run(void);
       const value_t& peek(size_t offset) const;

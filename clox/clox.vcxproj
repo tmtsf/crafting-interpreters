@@ -157,6 +157,7 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Program\crafting-interpreters\clox\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\Program\crafting-interpreters\clox\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <ClCompile Include="src\object.cpp" />
     <ClCompile Include="src\scanner.cpp" />
     <ClCompile Include="src\vm.cpp" />
   </ItemGroup>
@@ -164,6 +165,7 @@
     <ClInclude Include="include\chunk.hpp" />
     <ClInclude Include="include\common.hpp" />
     <ClInclude Include="include\compiler.hpp" />
+    <ClInclude Include="include\object.hpp" />
     <ClInclude Include="include\scanner.hpp" />
     <ClInclude Include="include\vm.hpp" />
   </ItemGroup>

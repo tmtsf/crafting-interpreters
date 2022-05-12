@@ -24,7 +24,7 @@ namespace clox {
     class Chunk {
     public:
       void write(const byte_code_t& code,
-                 int line);
+                 int_t line);
       size_t addConstant(const value_t& value);
       void disassemble(const string_t& name) const;
 

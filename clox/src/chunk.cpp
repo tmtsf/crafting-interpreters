@@ -1,10 +1,11 @@
 #include "chunk.hpp"
+#include "object.hpp"
 
 namespace clox {
   namespace vm {
 
     void Chunk::write(const byte_code_t& code,
-                      int line) {
+                      int_t line) {
       m_ByteCodes.push_back(code);
       m_Lines.push_back(line);
     }
@@ -90,11 +91,12 @@ namespace clox {
     // todo: use visitor pattern to print for specific types
     void Chunk::printValue(const value_t& value) const {
       std::visit(
-        util::overloaded {
+        util::overloaded(
           [](dbl_t x) { printf("%g", x);  },
           [](bool x) { printf("%s", x ? "true" : "false"); },
-          [](nullptr_t x) { printf("nil"); }
-        },
+          [](nullptr_t x) { printf("nil"); },
+          [](obj_ptr_t x) { x->print(); }
+        ),
         value
       );
     }

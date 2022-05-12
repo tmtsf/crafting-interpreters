@@ -59,7 +59,7 @@ namespace clox {
     struct Token {
       TokenType m_Type;
       string_t m_Lexeme;
-      int m_Line;
+      int_t m_Line;
     };
 
     class Scanner {
@@ -86,9 +86,9 @@ namespace clox {
 
     private:
       string_t m_Source;
-      int m_Start;
-      int m_Current;
-      int m_Line;
+      int_t m_Start;
+      int_t m_Current;
+      int_t m_Line;
     };
   }
 }
