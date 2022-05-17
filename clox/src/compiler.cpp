@@ -37,8 +37,10 @@ namespace clox {
     bool Compiler::compile(const string_t& source) {
       m_Scanner.set(source);
       advance();
-      expression();
-      consume(TokenType::END_OF_FILE, "Expect end of expression.");
+
+      while (!match(TokenType::END_OF_FILE))
+        declaration();
+
       endCompiler();
 
       return !m_Parser.m_HadError;
@@ -58,6 +60,48 @@ namespace clox {
 
     void Compiler::expression(void) {
       parse(Precedence::ASSIGNMENT);
+    }
+
+    void Compiler::declaration(void) {
+      if (match(TokenType::VAR)) {
+        varDeclaration();
+      } else {
+        statement();
+      }
+    }
+
+    void Compiler::varDeclaration(void) {
+      size_t global = parseVariable("Expect variable name.");
+
+      if (match(TokenType::EQUAL)) {
+        expression();
+      } else {
+        emitByte(OpCode::NIL);
+      }
+
+      consume(TokenType::SEMICOLON, "Expect ';' after variable declaration.");
+
+      defineVariable(global);
+    }
+
+    void Compiler::statement(void) {
+      if (match(TokenType::PRINT)) {
+        printStatement();
+      } else {
+        expressionStatement();
+      }
+    }
+
+    void Compiler::printStatement(void) {
+      expression();
+      consume(TokenType::SEMICOLON, "Expect ';' after value.");
+      emitByte(OpCode::PRINT);
+    }
+
+    void Compiler::expressionStatement(void) {
+      expression();
+      consume(TokenType::SEMICOLON, "Expect ';' after expression.");
+      emitByte(OpCode::POP);
     }
 
     void Compiler::consume(const TokenType& type, const string_t& message) {
@@ -95,6 +139,18 @@ namespace clox {
       m_Parser.m_HadError = true;
     }
 
+    bool Compiler::check(const TokenType& type) const {
+      return m_Parser.m_Curr.m_Type == type;
+    }
+
+    bool Compiler::match(const TokenType& type) {
+      if (!check(type))
+        return false;
+
+      advance();
+      return true;
+    }
+
     void Compiler::emitByte(const byte_code_t& code) {
       m_Chunk->write(code, m_Parser.m_Prev.m_Line);
     }
@@ -121,6 +177,19 @@ namespace clox {
       return offset;
     }
 
+    size_t Compiler::parseVariable(const char* message) {
+      consume(TokenType::IDENTIFIER, message);
+      return identifierConstant(m_Parser.m_Prev);
+    }
+
+    void Compiler::defineVariable(size_t global) {
+      emitBytes({ OpCode::DEFINE_GLOBAL, global });
+    }
+
+    size_t Compiler::identifierConstant(const Token& token) {
+      return makeConstant(clox::obj::Object::formStringObject(token.m_Lexeme));
+    }
+
     parse_rule_table_t Compiler::getParseRules(void) {
       static parse_rule_table_t rules = {
         {TokenType::LEFT_PAREN,       {&Compiler::grouping,   nullptr,              Precedence::NONE}},
@@ -142,7 +211,7 @@ namespace clox {
         {TokenType::GREATER_EQUAL,    {nullptr,               &Compiler::binary,    Precedence::COMPARISON}},
         {TokenType::LESS,             {nullptr,               &Compiler::binary,    Precedence::COMPARISON}},
         {TokenType::LESS_EQUAL,       {nullptr,               &Compiler::binary,    Precedence::COMPARISON}},
-        {TokenType::IDENTIFIER,       {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::IDENTIFIER,       {&Compiler::variable,   nullptr,              Precedence::NONE}},
         {TokenType::STRING,           {&Compiler::string,     nullptr,              Precedence::NONE}},
         {TokenType::NUMBER,           {&Compiler::number,     nullptr,              Precedence::NONE}},
         {TokenType::AND,              {nullptr,               nullptr,              Precedence::NONE}},
@@ -168,17 +237,17 @@ namespace clox {
       return rules;
     }
 
-    void Compiler::number(void) {
+    void Compiler::number(bool canAssign) {
       dbl_t value = std::stod(m_Parser.m_Prev.m_Lexeme);
       emitConstant(value);
     }
 
-    void Compiler::grouping(void) {
+    void Compiler::grouping(bool canAssign) {
       expression();
       consume(TokenType::RIGHT_PAREN, "Expect ')' after expression.");
     }
 
-    void Compiler::unary(void) {
+    void Compiler::unary(bool canAssign) {
       TokenType type = m_Parser.m_Prev.m_Type;
 
       parse(Precedence::UNARY);
@@ -196,7 +265,7 @@ namespace clox {
       }
     }
 
-    void Compiler::binary(void) {
+    void Compiler::binary(bool canAssign) {
       TokenType type = m_Parser.m_Prev.m_Type;
       const ParseRule& rule = parseRule(type);
       parse(static_cast<Precedence>(static_cast<int>(rule.m_Prec) + 1));
@@ -237,7 +306,7 @@ namespace clox {
       }
     }
 
-    void Compiler::literal(void) {
+    void Compiler::literal(bool canAssign) {
       switch (m_Parser.m_Prev.m_Type) {
       case TokenType::FALSE:
         emitByte(OpCode::FALSE);
@@ -253,10 +322,25 @@ namespace clox {
       }
     }
 
-    void Compiler::string(void) {
+    void Compiler::string(bool canAssign) {
       emitConstant(clox::obj::Object::formStringObject(
                         string_t(m_Parser.m_Prev.m_Lexeme.cbegin() + 1U,
                                  m_Parser.m_Prev.m_Lexeme.cend() - 1U)));
+    }
+
+    void Compiler::variable(bool canAssign) {
+      namedVariable(m_Parser.m_Prev, canAssign);
+    }
+
+    void Compiler::namedVariable(const Token& token, bool canAssign) {
+      size_t offset = identifierConstant(token);
+
+      if (canAssign && match(TokenType::EQUAL)) {
+        expression();
+        emitBytes({ OpCode::SET_GLOBAL, offset });
+      } else {
+        emitBytes({ OpCode::GET_GLOBAL, offset });
+      }
     }
 
     ParseRule Compiler::parseRule(const TokenType& type) {
@@ -271,13 +355,17 @@ namespace clox {
         return;
       }
 
-      (this->*prefix)();
+      bool canAssign = prec <= Precedence::ASSIGNMENT;
+      (this->*prefix)(canAssign);
 
       while (prec <= parseRule(m_Parser.m_Curr.m_Type).m_Prec) {
         advance();
         parse_func_t infix = parseRule(m_Parser.m_Prev.m_Type).m_Infix;
-        (this->*infix)();
+        (this->*infix)(canAssign);
       }
+
+      if (canAssign && match(TokenType::EQUAL))
+        error("Invalid assignment target.");
     }
   }
 }

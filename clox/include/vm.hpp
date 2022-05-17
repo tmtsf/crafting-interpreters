@@ -28,6 +28,8 @@ namespace clox {
     private:
       const OpCode& readByte(void);
       const value_t& readConstant(void);
+      const string_t& readString(void);
+
       void binaryAdd(void);
       void binaryOp(char c);
       InterpretResult run(void);
@@ -39,6 +41,7 @@ namespace clox {
       chunk_ptr_t m_Chunk;
       size_t m_IP; // Instruction pointer
       value_stack_t m_Stack;
+      global_table_t m_Globals;
     };
   }
 }

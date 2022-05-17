@@ -18,7 +18,12 @@ namespace clox {
       NOT,
       EQUAL,
       GREATER,
-      LESS
+      LESS,
+      PRINT,
+      POP,
+      DEFINE_GLOBAL,
+      GET_GLOBAL,
+      SET_GLOBAL
     };
 
     class Chunk {

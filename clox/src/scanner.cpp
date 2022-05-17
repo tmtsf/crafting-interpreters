@@ -113,8 +113,7 @@ namespace clox {
             // A comment goes until the end of the line.
             while (peek() != '\n' && !isAtEnd())
               advance();
-          }
-          else {
+          } else {
             return;
           }
           break;

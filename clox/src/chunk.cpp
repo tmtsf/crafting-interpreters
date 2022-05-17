@@ -42,6 +42,10 @@ namespace clox {
       switch (instruction) {
       case OpCode::RETURN:
         return simpleInstruction("RETURN", offset);
+      case OpCode::PRINT:
+        return simpleInstruction("PRINT", offset);
+      case OpCode::POP:
+        return simpleInstruction("POP", offset);
       case OpCode::NEGATE:
         return simpleInstruction("NEGATE", offset);
       case OpCode::ADD:
@@ -68,6 +72,12 @@ namespace clox {
         return simpleInstruction("GREATER", offset);
       case OpCode::LESS:
         return simpleInstruction("LESS", offset);
+      case OpCode::DEFINE_GLOBAL:
+        return constantInstruction("DEFINE_GLOBAL", offset);
+      case OpCode::GET_GLOBAL:
+        return constantInstruction("GET_GLOBAL", offset);
+      case OpCode::SET_GLOBAL:
+        return constantInstruction("SET_GLOBAL", offset);
       default:
         printf("Unknown opcode %d\n", instruction);
         return offset + 1;

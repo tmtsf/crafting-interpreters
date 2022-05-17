@@ -25,8 +25,6 @@ namespace {
 }
 
 int main(int argc, const char* argv[]) {
-  std::cout << sizeof(size_t) << "\n\n";
-
   clox::vm::VM vm;
 
   //if (argc == 1) {
@@ -40,7 +38,7 @@ int main(int argc, const char* argv[]) {
   //  exit(64);
   //}
 
-  vm.interpret("1 + 2 * 3 / 5 - 7 == -4.8");
+  vm.interpret("var x = 1; var y = 3; var z = 4; var w = 5; x * y = z + w;");
 
   return 0;
 }

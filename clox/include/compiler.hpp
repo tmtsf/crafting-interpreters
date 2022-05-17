@@ -37,7 +37,7 @@ namespace clox {
       PRIMARY,
     };
 
-    using parse_func_t = void (Compiler::*)(void);
+    using parse_func_t = void (Compiler::*)(bool);
 
     struct ParseRule {
       parse_func_t m_Prefix;
@@ -63,12 +63,24 @@ namespace clox {
       bool compile(const string_t& source);
     private:
       void advance(void);
-      void expression(void);
       void consume(const TokenType& type, const string_t& message);
+
+      void declaration(void);
+
+      void varDeclaration(void);
+
+      void statement(void);
+      void printStatement(void);
+      void expressionStatement(void);
+
+      void expression(void);
 
       void errorAtCurrent(const char* message);
       void error(const char* message);
       void errorAt(const Token& token, const char* message);
+
+      bool match(const TokenType& type);
+      bool check(const TokenType& type) const;
 
     private:
       void emitByte(const byte_code_t& code);
@@ -78,15 +90,21 @@ namespace clox {
       void endCompiler(void);
 
       size_t makeConstant(const value_t& value);
+      size_t parseVariable(const char* message);
+      size_t identifierConstant(const Token& token);
+      void defineVariable(size_t offset);
 
-      void number(void);
-      void grouping(void);
-      void unary(void);
-      void binary(void);
-      void literal(void);
-      void string(void);
+
+      void number(bool canAssign);
+      void grouping(bool canAssign);
+      void unary(bool canAssign);
+      void binary(bool canAssign);
+      void literal(bool canAssign);
+      void string(bool canAssign);
+      void variable(bool canAssign);
 
       void parse(const Precedence& prec);
+      void namedVariable(const Token& token, bool canAssign);
 
       static parse_rule_table_t getParseRules(void);
       ParseRule parseRule(const TokenType& type);

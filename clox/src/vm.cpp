@@ -46,6 +46,12 @@ namespace clox {
       return constants[offset];
     }
 
+    const string_t& VM::readString(void) {
+      const value_t& name = readConstant();
+      const string_ptr_t& pString = dynamic_cast<string_ptr_t>(std::get<obj_ptr_t>(name));
+      return pString->getString();
+    }
+
     void VM::binaryAdd(void) {
       value_t r = peek(0);
       value_t l = peek(1);
@@ -58,8 +64,7 @@ namespace clox {
         dbl_t left = std::get<dbl_t>(l);
         m_Stack.push_back(left + right);
         return;
-      }
-      else if (std::holds_alternative<obj_ptr_t>(r) || std::holds_alternative<obj_ptr_t>(l)) {
+      } else if (std::holds_alternative<obj_ptr_t>(r) || std::holds_alternative<obj_ptr_t>(l)) {
         auto pL = dynamic_cast<string_ptr_t>(std::get<obj_ptr_t>(l));
         auto pR = dynamic_cast<string_ptr_t>(std::get<obj_ptr_t>(r));
         if (pL && pR)
@@ -138,9 +143,6 @@ namespace clox {
           binaryOp('/');
           break;
         case OpCode::RETURN:
-          m_Chunk->printValue(m_Stack.back());
-          m_Stack.pop_back();
-          printf("\n");
           return InterpretResult::OK;
         case OpCode::NIL:
           m_Stack.push_back(nullptr);
@@ -172,6 +174,41 @@ namespace clox {
         case OpCode::LESS:
           binaryOp('<');
           break;
+        case OpCode::PRINT:
+          m_Chunk->printValue(m_Stack.back());
+          m_Stack.pop_back();
+          printf("\n");
+          break;
+        case OpCode::POP:
+          m_Stack.pop_back();
+          break;
+        case OpCode::DEFINE_GLOBAL:
+          m_Globals[readString()] = peek(0);
+          m_Stack.pop_back();
+          break;
+        case OpCode::GET_GLOBAL: {
+          string_t name = readString();
+          auto it = m_Globals.find(name);
+          if (it == m_Globals.cend()) {
+            fprintf(stderr, "Undefined variable '%s'.", name.c_str());
+            return InterpretResult::RUNTIME_ERROR;
+          }
+
+          m_Stack.push_back(it->second);
+          break;
+        }
+        case OpCode::SET_GLOBAL:
+        {
+          string_t name = readString();
+          auto it = m_Globals.find(name);
+          if (it == m_Globals.cend()) {
+            fprintf(stderr, "Undefined variable '%s'.", name.c_str());
+            return InterpretResult::RUNTIME_ERROR;
+          }
+
+          it->second = peek(0);
+          break;
+        }
         default:
           return InterpretResult::RUNTIME_ERROR;
         }
