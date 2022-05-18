@@ -36,3 +36,6 @@
 clox.vcxproj.filters
 clox.vcxproj.user
 x64/
+
+# CMake
+build/
