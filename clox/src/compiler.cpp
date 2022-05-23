@@ -30,6 +30,7 @@ namespace clox {
 
     Compiler::Compiler(const chunk_ptr_t& chunk) :
       m_Chunk(chunk),
+      m_Scope(),
       m_Parser(),
       m_Scanner()
     { }
@@ -87,6 +88,10 @@ namespace clox {
     void Compiler::statement(void) {
       if (match(TokenType::PRINT)) {
         printStatement();
+      } else if (match(TokenType::LEFT_BRACE)) {
+        beginScope();
+        block();
+        endScope();
       } else {
         expressionStatement();
       }
@@ -96,6 +101,13 @@ namespace clox {
       expression();
       consume(TokenType::SEMICOLON, "Expect ';' after value.");
       emitByte(OpCode::PRINT);
+    }
+
+    void Compiler::block(void) {
+      while (!check(TokenType::RIGHT_BRACE) && !check(TokenType::END_OF_FILE))
+        declaration();
+
+      consume(TokenType::RIGHT_BRACE, "Expect '}' after block.");
     }
 
     void Compiler::expressionStatement(void) {
@@ -151,6 +163,19 @@ namespace clox {
       return true;
     }
 
+    void Compiler::beginScope(void) {
+      ++m_Scope.m_Depth;
+    }
+
+    void Compiler::endScope(void) {
+      --m_Scope.m_Depth;
+
+      while (!m_Scope.m_Locals.empty() && m_Scope.m_Locals.back().m_Depth > m_Scope.m_Depth) {
+        emitByte(OpCode::POP);
+        m_Scope.m_Locals.pop_back();
+      }
+    }
+
     void Compiler::emitByte(const byte_code_t& code) {
       m_Chunk->write(code, m_Parser.m_Prev.m_Line);
     }
@@ -179,11 +204,47 @@ namespace clox {
 
     size_t Compiler::parseVariable(const char* message) {
       consume(TokenType::IDENTIFIER, message);
+
+      declareVariable();
+      if (m_Scope.m_Depth > 0)
+        return 0;
+
       return identifierConstant(m_Parser.m_Prev);
     }
 
     void Compiler::defineVariable(size_t global) {
+      if (m_Scope.m_Depth > 0) {
+        markInitialized();
+        return;
+      }
+
       emitBytes({ OpCode::DEFINE_GLOBAL, global });
+    }
+
+    void Compiler::declareVariable(void) {
+      if (m_Scope.m_Depth == 0)
+        return;
+
+      const Token& local = m_Parser.m_Prev;
+      if (!m_Scope.m_Locals.empty()) {
+        for (auto it = m_Scope.m_Locals.crbegin() + 1U; it != m_Scope.m_Locals.crend(); ++it) {
+          if (it->m_Depth != -1 && it->m_Depth < m_Scope.m_Depth)
+            break;
+
+          if (local.m_Lexeme.compare(it->m_Token.m_Lexeme) == 0)
+            error("Already a variable with this name in this scope");
+        }
+      }
+
+      addLocal(local);
+    }
+
+    void Compiler::addLocal(const Token& token) {
+      m_Scope.m_Locals.emplace_back(token, -1);
+    }
+
+    void Compiler::markInitialized(void) {
+      m_Scope.m_Locals.back().m_Depth = m_Scope.m_Depth;
     }
 
     size_t Compiler::identifierConstant(const Token& token) {
@@ -333,14 +394,39 @@ namespace clox {
     }
 
     void Compiler::namedVariable(const Token& token, bool canAssign) {
-      size_t offset = identifierConstant(token);
+      int_t offset = resolveLocal(token);
+
+      OpCode getOp;
+      OpCode setOp;
+      if (offset != -1) {
+        getOp = OpCode::GET_LOCAL;
+        setOp = OpCode::SET_LOCAL;
+      } else {
+        offset = identifierConstant(token);
+        getOp = OpCode::GET_GLOBAL;
+        setOp = OpCode::SET_GLOBAL;
+      }
 
       if (canAssign && match(TokenType::EQUAL)) {
         expression();
-        emitBytes({ OpCode::SET_GLOBAL, offset });
+        emitBytes({ setOp, static_cast<size_t>(offset) });
       } else {
-        emitBytes({ OpCode::GET_GLOBAL, offset });
+        emitBytes({ getOp, static_cast<size_t>(offset) });
       }
+    }
+
+    int_t Compiler::resolveLocal(const Token& token) {
+      for (int_t i = m_Scope.m_Locals.size() - 1; i >= 0; --i) {
+        const Local& local = m_Scope.m_Locals[i];
+        if (token.m_Lexeme.compare(local.m_Token.m_Lexeme) == 0) {
+          if (local.m_Depth == -1)
+            error("Cannot read local variable in its own initializer.");
+
+          return i;
+        }
+      }
+
+      return -1;
     }
 
     ParseRule Compiler::parseRule(const TokenType& type) {

@@ -38,7 +38,7 @@ int main(int argc, const char* argv[]) {
   //  exit(64);
   //}
 
-  vm.interpret("var x = 1; var y = 3; var z = 4; var w = 5; x * y = z + w;");
+  vm.interpret("var a = 3; { var b = a; print b + 1; b = a * 4; { var c = a * a; var d = c + b; print d * 2; } }");
 
   return 0;
 }

@@ -27,6 +27,7 @@ namespace clox {
       InterpretResult interpret(const string_t& source);
     private:
       const OpCode& readByte(void);
+      const size_t readOffset(void);
       const value_t& readConstant(void);
       const string_t& readString(void);
 

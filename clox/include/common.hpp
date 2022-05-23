@@ -26,6 +26,8 @@ namespace clox {
   namespace compiler {
     struct Parser;
     class Compiler;
+    struct Local;
+    struct Stack;
   }
 
   namespace obj {
@@ -61,4 +63,6 @@ namespace clox {
   using value_stack_t = std::vector<value_t>;
 
   using global_table_t = std::unordered_map<string_t, value_t>;
+
+  using local_vec_t = std::vector<compiler::Local>;
 }

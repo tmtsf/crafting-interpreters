@@ -54,6 +54,21 @@ namespace clox {
       };
     }
 
+    struct Local {
+      Token m_Token;
+      int m_Depth;
+    };
+
+    struct Scope {
+      Scope(void) :
+        m_Locals(),
+        m_Depth(0)
+      { }
+
+      local_vec_t m_Locals;
+      int_t m_Depth;
+    };
+
     using parse_rule_table_t = std::unordered_map<TokenType, ParseRule, Hash>;
 
     class Compiler {
@@ -71,6 +86,7 @@ namespace clox {
 
       void statement(void);
       void printStatement(void);
+      void block(void);
       void expressionStatement(void);
 
       void expression(void);
@@ -81,6 +97,9 @@ namespace clox {
 
       bool match(const TokenType& type);
       bool check(const TokenType& type) const;
+
+      void beginScope(void);
+      void endScope(void);
 
     private:
       void emitByte(const byte_code_t& code);
@@ -93,7 +112,9 @@ namespace clox {
       size_t parseVariable(const char* message);
       size_t identifierConstant(const Token& token);
       void defineVariable(size_t offset);
-
+      void declareVariable(void);
+      void addLocal(const Token& token);
+      void markInitialized(void);
 
       void number(bool canAssign);
       void grouping(bool canAssign);
@@ -106,10 +127,13 @@ namespace clox {
       void parse(const Precedence& prec);
       void namedVariable(const Token& token, bool canAssign);
 
+      int_t resolveLocal(const Token& token);
+
       static parse_rule_table_t getParseRules(void);
       ParseRule parseRule(const TokenType& type);
     private:
       chunk_ptr_t m_Chunk;
+      Scope m_Scope;
       Parser m_Parser;
       Scanner m_Scanner;
     };

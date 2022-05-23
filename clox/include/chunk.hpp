@@ -23,7 +23,9 @@ namespace clox {
       POP,
       DEFINE_GLOBAL,
       GET_GLOBAL,
-      SET_GLOBAL
+      SET_GLOBAL,
+      GET_LOCAL,
+      SET_LOCAL
     };
 
     class Chunk {
@@ -41,6 +43,7 @@ namespace clox {
 
       size_t simpleInstruction(const string_t& name, size_t offset) const;
       size_t constantInstruction(const string_t& name, size_t offset) const;
+      size_t byteInstruction(const string_t& name, size_t offset) const;
     private:
       byte_code_vec_t m_ByteCodes;
       value_vec_t m_Constants;

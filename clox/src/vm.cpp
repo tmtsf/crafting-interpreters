@@ -38,12 +38,14 @@ namespace clox {
       return std::get<OpCode>(byteCodes[m_IP++]);
     }
 
-    const value_t& VM::readConstant(void) {
+    const size_t VM::readOffset(void) {
       const byte_code_vec_t& byteCodes = m_Chunk->getByteCodes();
-      size_t offset = std::get<size_t>(byteCodes[m_IP++]);
+      return std::get<size_t>(byteCodes[m_IP++]);
+    }
 
+    const value_t& VM::readConstant(void) {
       const value_vec_t& constants = m_Chunk->getConstants();
-      return constants[offset];
+      return constants[readOffset()];
     }
 
     const string_t& VM::readString(void) {
@@ -209,6 +211,12 @@ namespace clox {
           it->second = peek(0);
           break;
         }
+        case OpCode::GET_LOCAL:
+          m_Stack.push_back(m_Stack[readOffset()]);
+          break;
+        case OpCode::SET_LOCAL:
+          m_Stack[readOffset()] = peek(0);
+          break;
         default:
           return InterpretResult::RUNTIME_ERROR;
         }

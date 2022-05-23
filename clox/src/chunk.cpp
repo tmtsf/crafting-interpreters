@@ -78,6 +78,10 @@ namespace clox {
         return constantInstruction("GET_GLOBAL", offset);
       case OpCode::SET_GLOBAL:
         return constantInstruction("SET_GLOBAL", offset);
+      case OpCode::GET_LOCAL:
+        return byteInstruction("GET_LOCAL", offset);
+      case OpCode::SET_LOCAL:
+        return byteInstruction("SET_LOCAL", offset);
       default:
         printf("Unknown opcode %d\n", instruction);
         return offset + 1;
@@ -94,6 +98,13 @@ namespace clox {
       printf("%-16s %4zu '", name.c_str(), constant);
       printValue(m_Constants[constant]);
       printf("'\n");
+
+      return offset + 2;
+    }
+
+    size_t Chunk::byteInstruction(const string_t& name, size_t offset) const {
+      auto constant = std::get<size_t>(m_ByteCodes[offset + 1]);
+      printf("%-16s %4zu\n", name.c_str(), constant);
 
       return offset + 2;
     }
