@@ -58,8 +58,6 @@ namespace clox {
 
   using int_vec_t = std::vector<int_t>;
 
-  using chunk_ptr_t = std::shared_ptr<vm::Chunk>;
-
   using value_stack_t = std::vector<value_t>;
 
   using global_table_t = std::unordered_map<string_t, value_t>;

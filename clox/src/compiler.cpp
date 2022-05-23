@@ -28,7 +28,7 @@ namespace clox {
     //  }
     //}
 
-    Compiler::Compiler(const chunk_ptr_t& chunk) :
+    Compiler::Compiler(Chunk& chunk) :
       m_Chunk(chunk),
       m_Scope(),
       m_Parser(),
@@ -177,7 +177,7 @@ namespace clox {
     }
 
     void Compiler::emitByte(const byte_code_t& code) {
-      m_Chunk->write(code, m_Parser.m_Prev.m_Line);
+      m_Chunk.write(code, m_Parser.m_Prev.m_Line);
     }
 
     void Compiler::emitBytes(const byte_code_vec_t& codes) {
@@ -198,7 +198,7 @@ namespace clox {
     }
 
     size_t Compiler::makeConstant(const value_t& value) {
-      size_t offset = m_Chunk->addConstant(value);
+      size_t offset = m_Chunk.addConstant(value);
       return offset;
     }
 
@@ -394,11 +394,13 @@ namespace clox {
     }
 
     void Compiler::namedVariable(const Token& token, bool canAssign) {
-      int_t offset = resolveLocal(token);
+      int_t arg = resolveLocal(token);
+      size_t offset;
 
       OpCode getOp;
       OpCode setOp;
-      if (offset != -1) {
+      if (arg != -1) {
+        offset = static_cast<size_t>(arg);
         getOp = OpCode::GET_LOCAL;
         setOp = OpCode::SET_LOCAL;
       } else {
@@ -409,14 +411,14 @@ namespace clox {
 
       if (canAssign && match(TokenType::EQUAL)) {
         expression();
-        emitBytes({ setOp, static_cast<size_t>(offset) });
+        emitBytes({ setOp, offset });
       } else {
-        emitBytes({ getOp, static_cast<size_t>(offset) });
+        emitBytes({ getOp, offset });
       }
     }
 
-    int_t Compiler::resolveLocal(const Token& token) {
-      for (int_t i = m_Scope.m_Locals.size() - 1; i >= 0; --i) {
+    int_t Compiler::resolveLocal(const Token& token) {      
+      for (int_t i = static_cast<int_t>(m_Scope.m_Locals.size() - 1); i >= 0; --i) {
         const Local& local = m_Scope.m_Locals[i];
         if (token.m_Lexeme.compare(local.m_Token.m_Lexeme) == 0) {
           if (local.m_Depth == -1)

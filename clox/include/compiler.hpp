@@ -74,7 +74,7 @@ namespace clox {
     class Compiler {
     public:
       //void compile(const string_t& source);
-      Compiler(const chunk_ptr_t& chunk);
+      Compiler(Chunk& chunk);
       bool compile(const string_t& source);
     private:
       void advance(void);
@@ -132,7 +132,7 @@ namespace clox {
       static parse_rule_table_t getParseRules(void);
       ParseRule parseRule(const TokenType& type);
     private:
-      chunk_ptr_t m_Chunk;
+      Chunk& m_Chunk;
       Scope m_Scope;
       Parser m_Parser;
       Scanner m_Scanner;

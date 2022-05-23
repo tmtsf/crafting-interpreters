@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.hpp"
+#include "chunk.hpp"
 
 namespace clox {
 
@@ -14,7 +15,6 @@ namespace clox {
     class VM {
     public:
       VM(void);
-      VM(const chunk_ptr_t& chunk);
       ~VM(void) = default;
 
       // Do not allow copy or move the virtual machine
@@ -39,7 +39,7 @@ namespace clox {
       bool isFalsey(const value_t& value) const;
       bool areEqual(const value_t& left, const value_t& right) const;
     private:
-      chunk_ptr_t m_Chunk;
+      Chunk m_Chunk;
       size_t m_IP; // Instruction pointer
       value_stack_t m_Stack;
       global_table_t m_Globals;

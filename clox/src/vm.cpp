@@ -9,12 +9,7 @@ namespace clox {
 
   namespace vm {
     VM::VM(void) :
-      m_Chunk(std::make_shared<Chunk>()),
-      m_IP(0)
-    { }
-
-    VM::VM(const chunk_ptr_t& chunk) :
-      m_Chunk(chunk),
+      m_Chunk(),
       m_IP(0)
     { }
 
@@ -27,24 +22,24 @@ namespace clox {
       if (!compiler.compile(source))
         return InterpretResult::COMPILE_ERROR;
 
-      m_Chunk->disassemble("debug chunk");
+      m_Chunk.disassemble("debug chunk");
       printf("\n\n");
 
       return run();
     }
 
     const OpCode& VM::readByte(void) {
-      const byte_code_vec_t& byteCodes = m_Chunk->getByteCodes();
+      const byte_code_vec_t& byteCodes = m_Chunk.getByteCodes();
       return std::get<OpCode>(byteCodes[m_IP++]);
     }
 
     const size_t VM::readOffset(void) {
-      const byte_code_vec_t& byteCodes = m_Chunk->getByteCodes();
+      const byte_code_vec_t& byteCodes = m_Chunk.getByteCodes();
       return std::get<size_t>(byteCodes[m_IP++]);
     }
 
     const value_t& VM::readConstant(void) {
-      const value_vec_t& constants = m_Chunk->getConstants();
+      const value_vec_t& constants = m_Chunk.getConstants();
       return constants[readOffset()];
     }
 
@@ -177,7 +172,7 @@ namespace clox {
           binaryOp('<');
           break;
         case OpCode::PRINT:
-          m_Chunk->printValue(m_Stack.back());
+          m_Chunk.printValue(m_Stack.back());
           m_Stack.pop_back();
           printf("\n");
           break;
