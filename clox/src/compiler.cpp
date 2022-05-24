@@ -143,7 +143,7 @@ namespace clox {
     }
 
     void Compiler::whileStatement(void) {
-      size_t start = m_Chunk.getByteCodes().size();
+      size_t start = m_Chunk.size();
       consume(TokenType::LEFT_PAREN, "Expect '(' after 'while'.");
       expression();
       consume(TokenType::RIGHT_PAREN, "Expect ')' after condition.");
@@ -168,7 +168,7 @@ namespace clox {
         expressionStatement();
       }
 
-      size_t loopStart = m_Chunk.getByteCodes().size();
+      size_t loopStart = m_Chunk.size();
       size_t exitJump = SIZE_MAX;
       if (!match(TokenType::SEMICOLON)) {
         expression();
@@ -180,7 +180,7 @@ namespace clox {
 
       if (!match(TokenType::RIGHT_PAREN)) {
         size_t bodyJump = emitJump(OpCode::JUMP);
-        size_t incrStart = m_Chunk.getByteCodes().size();
+        size_t incrStart = m_Chunk.size();
         expression();
         emitByte(OpCode::POP);
         consume(TokenType::RIGHT_PAREN, "Expect ')' after for clauses.");
@@ -281,18 +281,18 @@ namespace clox {
     size_t Compiler::emitJump(const OpCode& jump) {
       emitByte(jump);
       emitByte(SIZE_MAX);
-      return m_Chunk.getByteCodes().size() - 1;
+      return m_Chunk.size() - 1;
     }
 
     void Compiler::patchJump(size_t offset) {
-      size_t jump = m_Chunk.getByteCodes().size() - offset - 1;
-      m_Chunk.getByteCodes()[offset] = jump;
+      size_t jump = m_Chunk.size() - offset - 1;
+      m_Chunk.replace(offset, jump);
     }
 
     void Compiler::emitLoop(size_t start) {
       emitByte(OpCode::LOOP);
 
-      size_t offset = m_Chunk.getByteCodes().size() - start + 1;
+      size_t offset = m_Chunk.size() - start + 1;
       emitByte(offset);
     }
 

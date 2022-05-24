@@ -33,14 +33,15 @@ namespace clox {
 
     class Chunk {
     public:
-      void write(const byte_code_t& code,
-                 int_t line);
+      void write(const byte_code_t& code, int_t line);
+      void replace(size_t offset, const byte_code_t& code);
       size_t addConstant(const value_t& value);
+      size_t size(void) const;
       void disassemble(const string_t& name) const;
 
-      const byte_code_vec_t& getByteCodes(void) const;
-      byte_code_vec_t& getByteCodes(void);
-      const value_vec_t& getConstants(void) const;
+      const OpCode& readByte(size_t offset);
+      size_t readOffset(size_t offset);
+      const value_t& readConstant(size_t offset);
       void printValue(const value_t& value) const;
     private:
       size_t disassemble(size_t offset) const;

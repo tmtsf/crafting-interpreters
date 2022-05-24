@@ -29,18 +29,15 @@ namespace clox {
     }
 
     const OpCode& VM::readByte(void) {
-      const byte_code_vec_t& byteCodes = m_Chunk.getByteCodes();
-      return std::get<OpCode>(byteCodes[m_IP++]);
+      return m_Chunk.readByte(m_IP++);
     }
 
     const size_t VM::readOffset(void) {
-      const byte_code_vec_t& byteCodes = m_Chunk.getByteCodes();
-      return std::get<size_t>(byteCodes[m_IP++]);
+      return m_Chunk.readOffset(m_IP++);
     }
 
     const value_t& VM::readConstant(void) {
-      const value_vec_t& constants = m_Chunk.getConstants();
-      return constants[readOffset()];
+      return m_Chunk.readConstant(readOffset());
     }
 
     const string_t& VM::readString(void) {

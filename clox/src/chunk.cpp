@@ -4,15 +4,22 @@
 namespace clox {
   namespace vm {
 
-    void Chunk::write(const byte_code_t& code,
-                      int_t line) {
+    void Chunk::write(const byte_code_t& code, int_t line) {
       m_ByteCodes.push_back(code);
       m_Lines.push_back(line);
+    }
+
+    void Chunk::replace(size_t offset, const byte_code_t& code) {
+      m_ByteCodes[offset] = code;
     }
 
     size_t Chunk::addConstant(const value_t& value) {
       m_Constants.push_back(value);
       return m_Constants.size() - 1;
+    }
+
+    size_t Chunk::size(void) const {
+      return m_ByteCodes.size();
     }
 
     void Chunk::disassemble(const string_t& name) const {
@@ -22,16 +29,16 @@ namespace clox {
         offset = disassemble(offset);
     }
 
-    const byte_code_vec_t& Chunk::getByteCodes(void) const {
-      return m_ByteCodes;
+    const OpCode& Chunk::readByte(size_t offset) {
+      return std::get<OpCode>(m_ByteCodes[offset]);
     }
 
-    byte_code_vec_t& Chunk::getByteCodes(void) {
-      return m_ByteCodes;
+    size_t Chunk::readOffset(size_t offset) {
+      return std::get<size_t>(m_ByteCodes[offset]);
     }
 
-    const value_vec_t& Chunk::getConstants(void) const {
-      return m_Constants;
+    const value_t& Chunk::readConstant(size_t offset) {
+      return m_Constants[offset];
     }
 
     size_t Chunk::disassemble(size_t offset) const {
@@ -121,7 +128,7 @@ namespace clox {
 
     size_t Chunk::jumpInstruction(const string_t& name, int_t sign, size_t offset) const {
       auto jump = std::get<size_t>(m_ByteCodes[offset + 1]);
-      printf("%-16s %4zu -> %zu\n", name.c_str(), offset, offset + 3 + sign * jump);
+      printf("%-16s %4zu -> %zu\n", name.c_str(), offset, offset + 2 + sign * jump);
 
       return offset + 2;
     }
