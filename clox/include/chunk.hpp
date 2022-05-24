@@ -25,7 +25,10 @@ namespace clox {
       GET_GLOBAL,
       SET_GLOBAL,
       GET_LOCAL,
-      SET_LOCAL
+      SET_LOCAL,
+      JUMP_IF_FALSE,
+      JUMP,
+      LOOP
     };
 
     class Chunk {
@@ -36,6 +39,7 @@ namespace clox {
       void disassemble(const string_t& name) const;
 
       const byte_code_vec_t& getByteCodes(void) const;
+      byte_code_vec_t& getByteCodes(void);
       const value_vec_t& getConstants(void) const;
       void printValue(const value_t& value) const;
     private:
@@ -44,6 +48,7 @@ namespace clox {
       size_t simpleInstruction(const string_t& name, size_t offset) const;
       size_t constantInstruction(const string_t& name, size_t offset) const;
       size_t byteInstruction(const string_t& name, size_t offset) const;
+      size_t jumpInstruction(const string_t& name, int_t sign, size_t offset) const;
     private:
       byte_code_vec_t m_ByteCodes;
       value_vec_t m_Constants;

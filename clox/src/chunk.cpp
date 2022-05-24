@@ -26,6 +26,10 @@ namespace clox {
       return m_ByteCodes;
     }
 
+    byte_code_vec_t& Chunk::getByteCodes(void) {
+      return m_ByteCodes;
+    }
+
     const value_vec_t& Chunk::getConstants(void) const {
       return m_Constants;
     }
@@ -82,6 +86,12 @@ namespace clox {
         return byteInstruction("GET_LOCAL", offset);
       case OpCode::SET_LOCAL:
         return byteInstruction("SET_LOCAL", offset);
+      case OpCode::JUMP_IF_FALSE:
+        return jumpInstruction("JUMP_IF_FALSE", 1, offset);
+      case OpCode::JUMP:
+        return jumpInstruction("JUMP", 1, offset);
+      case OpCode::LOOP:
+        return jumpInstruction("LOOP", -1, offset);
       default:
         printf("Unknown opcode %d\n", instruction);
         return offset + 1;
@@ -105,6 +115,13 @@ namespace clox {
     size_t Chunk::byteInstruction(const string_t& name, size_t offset) const {
       auto constant = std::get<size_t>(m_ByteCodes[offset + 1]);
       printf("%-16s %4zu\n", name.c_str(), constant);
+
+      return offset + 2;
+    }
+
+    size_t Chunk::jumpInstruction(const string_t& name, int_t sign, size_t offset) const {
+      auto jump = std::get<size_t>(m_ByteCodes[offset + 1]);
+      printf("%-16s %4zu -> %zu\n", name.c_str(), offset, offset + 3 + sign * jump);
 
       return offset + 2;
     }

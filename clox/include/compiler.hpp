@@ -88,6 +88,9 @@ namespace clox {
       void printStatement(void);
       void block(void);
       void expressionStatement(void);
+      void ifStatement(void);
+      void whileStatement(void);
+      void forStatement(void);
 
       void expression(void);
 
@@ -106,6 +109,9 @@ namespace clox {
       void emitBytes(const byte_code_vec_t& codes);
       void emitConstant(const value_t& value);
       void emitReturn(void);
+      size_t emitJump(const OpCode& jump);
+      void patchJump(size_t offset);
+      void emitLoop(size_t start);
       void endCompiler(void);
 
       size_t makeConstant(const value_t& value);
@@ -123,6 +129,8 @@ namespace clox {
       void literal(bool canAssign);
       void string(bool canAssign);
       void variable(bool canAssign);
+      void and_(bool canAssign);
+      void or_(bool canAssign);
 
       void parse(const Precedence& prec);
       void namedVariable(const Token& token, bool canAssign);

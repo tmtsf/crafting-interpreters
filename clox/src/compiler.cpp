@@ -92,6 +92,12 @@ namespace clox {
         beginScope();
         block();
         endScope();
+      } else if (match(TokenType::IF)) {
+        ifStatement();
+      } else if (match(TokenType::WHILE)) {
+        whileStatement();
+      } else if (match(TokenType::FOR)) {
+        forStatement();
       } else {
         expressionStatement();
       }
@@ -114,6 +120,85 @@ namespace clox {
       expression();
       consume(TokenType::SEMICOLON, "Expect ';' after expression.");
       emitByte(OpCode::POP);
+    }
+
+    void Compiler::ifStatement(void) {
+      consume(TokenType::LEFT_PAREN, "Expect '(' after 'if'.");
+      expression();
+      consume(TokenType::RIGHT_PAREN, "Expect ')' after condition.");
+
+      size_t thenJump = emitJump(OpCode::JUMP_IF_FALSE);
+      emitByte(OpCode::POP);
+      statement();
+
+      size_t elseJump = emitJump(OpCode::JUMP);
+
+      patchJump(thenJump);
+      emitByte(OpCode::POP);
+
+      if (match(TokenType::ELSE))
+        statement();
+
+      patchJump(elseJump);
+    }
+
+    void Compiler::whileStatement(void) {
+      size_t start = m_Chunk.getByteCodes().size();
+      consume(TokenType::LEFT_PAREN, "Expect '(' after 'while'.");
+      expression();
+      consume(TokenType::RIGHT_PAREN, "Expect ')' after condition.");
+
+      size_t exitJump = emitJump(OpCode::JUMP_IF_FALSE);
+      emitByte(OpCode::POP);
+      statement();
+      emitLoop(start);
+
+      patchJump(exitJump);
+      emitByte(OpCode::POP);
+    }
+
+    void Compiler::forStatement(void) {
+      beginScope();
+      consume(TokenType::LEFT_PAREN, "Expect '(' after 'for'.");
+      if (match(TokenType::SEMICOLON)) {
+        ;                 // empty initializer, do nothing
+      } else if (match(TokenType::VAR)) {
+        varDeclaration();
+      } else {
+        expressionStatement();
+      }
+
+      size_t loopStart = m_Chunk.getByteCodes().size();
+      size_t exitJump = SIZE_MAX;
+      if (!match(TokenType::SEMICOLON)) {
+        expression();
+        consume(TokenType::SEMICOLON, "Expect ';' after loop condition.");
+
+        exitJump = emitJump(OpCode::JUMP_IF_FALSE);
+        emitByte(OpCode::POP);
+      }
+
+      if (!match(TokenType::RIGHT_PAREN)) {
+        size_t bodyJump = emitJump(OpCode::JUMP);
+        size_t incrStart = m_Chunk.getByteCodes().size();
+        expression();
+        emitByte(OpCode::POP);
+        consume(TokenType::RIGHT_PAREN, "Expect ')' after for clauses.");
+
+        emitLoop(loopStart);
+        loopStart = incrStart;
+        patchJump(bodyJump);
+      }
+
+      statement();
+      emitLoop(loopStart);
+
+      if (exitJump != SIZE_MAX) {
+        patchJump(exitJump);
+        emitByte(OpCode::POP);
+      }
+
+      endScope();
     }
 
     void Compiler::consume(const TokenType& type, const string_t& message) {
@@ -191,6 +276,24 @@ namespace clox {
 
     void Compiler::emitReturn(void) {
       emitByte(OpCode::RETURN);
+    }
+
+    size_t Compiler::emitJump(const OpCode& jump) {
+      emitByte(jump);
+      emitByte(SIZE_MAX);
+      return m_Chunk.getByteCodes().size() - 1;
+    }
+
+    void Compiler::patchJump(size_t offset) {
+      size_t jump = m_Chunk.getByteCodes().size() - offset - 1;
+      m_Chunk.getByteCodes()[offset] = jump;
+    }
+
+    void Compiler::emitLoop(size_t start) {
+      emitByte(OpCode::LOOP);
+
+      size_t offset = m_Chunk.getByteCodes().size() - start + 1;
+      emitByte(offset);
     }
 
     void Compiler::endCompiler(void) {
@@ -275,7 +378,7 @@ namespace clox {
         {TokenType::IDENTIFIER,       {&Compiler::variable,   nullptr,              Precedence::NONE}},
         {TokenType::STRING,           {&Compiler::string,     nullptr,              Precedence::NONE}},
         {TokenType::NUMBER,           {&Compiler::number,     nullptr,              Precedence::NONE}},
-        {TokenType::AND,              {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::AND,              {nullptr,               &Compiler::and_,      Precedence::AND}},
         {TokenType::CLASS,            {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::ELSE,             {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::FALSE,            {&Compiler::literal,    nullptr,              Precedence::NONE}},
@@ -283,7 +386,7 @@ namespace clox {
         {TokenType::FUN,              {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::IF,               {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::NIL,              {&Compiler::literal,    nullptr,              Precedence::NONE}},
-        {TokenType::OR,               {nullptr,               nullptr,              Precedence::NONE}},
+        {TokenType::OR,               {nullptr,               &Compiler::or_,       Precedence::OR}},
         {TokenType::PRINT,            {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::RETURN,           {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::SUPER,            {nullptr,               nullptr,              Precedence::NONE}},
@@ -391,6 +494,26 @@ namespace clox {
 
     void Compiler::variable(bool canAssign) {
       namedVariable(m_Parser.m_Prev, canAssign);
+    }
+
+    void Compiler::and_(bool canAssign) {
+      size_t endJump = emitJump(OpCode::JUMP_IF_FALSE);
+
+      emitByte(OpCode::POP);
+      parse(Precedence::AND);
+
+      patchJump(endJump);
+    }
+
+    void Compiler::or_(bool canAssign) {
+      size_t elseJump = emitJump(OpCode::JUMP_IF_FALSE);
+      size_t endJump = emitJump(OpCode::JUMP);
+
+      patchJump(elseJump);
+      emitByte(OpCode::POP);
+
+      parse(Precedence::OR);
+      patchJump(endJump);
     }
 
     void Compiler::namedVariable(const Token& token, bool canAssign) {

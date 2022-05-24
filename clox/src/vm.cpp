@@ -212,6 +212,26 @@ namespace clox {
         case OpCode::SET_LOCAL:
           m_Stack[readOffset()] = peek(0);
           break;
+        case OpCode::JUMP_IF_FALSE:
+        {
+          size_t offset = readOffset();
+          if (isFalsey(peek(0)))
+            m_IP += offset;
+
+          break;
+        }
+        case OpCode::JUMP:
+        {
+          size_t offset = readOffset();
+          m_IP += offset;
+          break;
+        }
+        case OpCode::LOOP:
+        {
+          size_t offset = readOffset();
+          m_IP -= offset;
+          break;
+        }
         default:
           return InterpretResult::RUNTIME_ERROR;
         }
