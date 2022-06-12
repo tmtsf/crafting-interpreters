@@ -99,6 +99,8 @@ namespace clox {
         return jumpInstruction("JUMP", 1, offset);
       case OpCode::LOOP:
         return jumpInstruction("LOOP", -1, offset);
+      case OpCode::CALL:
+        return byteInstruction("CALL", offset);
       default:
         printf("Unknown opcode %d\n", instruction);
         return offset + 1;

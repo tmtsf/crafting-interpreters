@@ -7,33 +7,29 @@
 
 namespace clox {
   namespace compiler {
-    //void Compiler::compile(const string_t& source) {
-    //  Scanner scanner(source);
+    Scope::Scope(const scope_ptr_t& enclosing,
+                 const FunctionType& type) :
+      m_Enclosing(enclosing),
+      m_Function(nullptr),
+      m_Type(type),
+      m_Locals(),
+      m_Depth(0)
+    {
+      m_Function = new obj::Function();
+      m_Locals.emplace_back(Token(TokenType(), "", 0), 0);
+    }
 
-    //  int line = -1;
-    //  for (; ; ) {
-    //    Token token = scanner.scan();
-    //    if (token.m_Line != line) {
-    //      printf("%4d ", token.m_Line);
-    //      line = token.m_Line;
-    //    }
-    //    else {
-    //      printf("   | ");
-    //    }
+    Scope::~Scope(void) {
+      //delete m_Function;
+    }
 
-    //    printf("%2d '%s'\n", token.m_Type, token.m_Lexeme.c_str());
-
-    //    if (token.m_Type == TokenType::END_OF_FILE)
-    //      break;
-    //  }
-    //}
-
-    Compiler::Compiler(Chunk& chunk) :
-      m_Chunk(chunk),
-      m_Scope(new obj::Function(), FunctionType::SCRIPT),
+    Compiler::Compiler(void) :
+      m_Scope(nullptr, FunctionType::SCRIPT),
       m_Parser(),
       m_Scanner()
-    { }
+    {
+      m_Chunk = &m_Scope.m_Function->m_Chunk;
+    }
 
     function_ptr_t Compiler::compile(const string_t& source) {
       m_Scanner.set(source);
@@ -66,6 +62,8 @@ namespace clox {
     void Compiler::declaration(void) {
       if (match(TokenType::VAR)) {
         varDeclaration();
+      } else if (match(TokenType::FUN)) {
+        funDeclaration();
       } else {
         statement();
       }
@@ -85,6 +83,13 @@ namespace clox {
       defineVariable(global);
     }
 
+    void Compiler::funDeclaration(void) {
+      size_t global = parseVariable("Expect function name.");
+      markInitialized();
+      function(FunctionType::FUNCTION);
+      defineVariable(global);
+    }
+
     void Compiler::statement(void) {
       if (match(TokenType::PRINT)) {
         printStatement();
@@ -98,6 +103,8 @@ namespace clox {
         whileStatement();
       } else if (match(TokenType::FOR)) {
         forStatement();
+      } else if (match(TokenType::RETURN)) {
+        returnStatement();
       } else {
         expressionStatement();
       }
@@ -143,7 +150,7 @@ namespace clox {
     }
 
     void Compiler::whileStatement(void) {
-      size_t start = m_Chunk.size();
+      size_t start = m_Chunk->size();
       consume(TokenType::LEFT_PAREN, "Expect '(' after 'while'.");
       expression();
       consume(TokenType::RIGHT_PAREN, "Expect ')' after condition.");
@@ -168,7 +175,7 @@ namespace clox {
         expressionStatement();
       }
 
-      size_t loopStart = m_Chunk.size();
+      size_t loopStart = m_Chunk->size();
       size_t exitJump = SIZE_MAX;
       if (!match(TokenType::SEMICOLON)) {
         expression();
@@ -180,7 +187,7 @@ namespace clox {
 
       if (!match(TokenType::RIGHT_PAREN)) {
         size_t bodyJump = emitJump(OpCode::JUMP);
-        size_t incrStart = m_Chunk.size();
+        size_t incrStart = m_Chunk->size();
         expression();
         emitByte(OpCode::POP);
         consume(TokenType::RIGHT_PAREN, "Expect ')' after for clauses.");
@@ -199,6 +206,19 @@ namespace clox {
       }
 
       endScope();
+    }
+
+    void Compiler::returnStatement(void) {
+      if (m_Scope.m_Type == FunctionType::SCRIPT)
+        error("Cannot return from top-level code.");
+
+      if (match(TokenType::SEMICOLON)) {
+        emitReturn();
+      } else {
+        expression();
+        consume(TokenType::SEMICOLON, "Expect ';' after return value.");
+        emitByte(OpCode::RETURN);
+      }
     }
 
     void Compiler::consume(const TokenType& type, const string_t& message) {
@@ -262,7 +282,7 @@ namespace clox {
     }
 
     void Compiler::emitByte(const byte_code_t& code) {
-      m_Chunk.write(code, m_Parser.m_Prev.m_Line);
+      m_Chunk->write(code, m_Parser.m_Prev.m_Line);
     }
 
     void Compiler::emitBytes(const byte_code_vec_t& codes) {
@@ -275,24 +295,25 @@ namespace clox {
     }
 
     void Compiler::emitReturn(void) {
+      emitByte(OpCode::NIL);
       emitByte(OpCode::RETURN);
     }
 
     size_t Compiler::emitJump(const OpCode& jump) {
       emitByte(jump);
       emitByte(SIZE_MAX);
-      return m_Chunk.size() - 1;
+      return m_Chunk->size() - 1;
     }
 
     void Compiler::patchJump(size_t offset) {
-      size_t jump = m_Chunk.size() - offset - 1;
-      m_Chunk.replace(offset, jump);
+      size_t jump = m_Chunk->size() - offset - 1;
+      m_Chunk->replace(offset, jump);
     }
 
     void Compiler::emitLoop(size_t start) {
       emitByte(OpCode::LOOP);
 
-      size_t offset = m_Chunk.size() - start + 1;
+      size_t offset = m_Chunk->size() - start + 1;
       emitByte(offset);
     }
 
@@ -300,11 +321,16 @@ namespace clox {
       emitReturn();
 
       function_ptr_t function = m_Scope.m_Function;
+      if (m_Scope.m_Enclosing) {
+        m_Scope = *m_Scope.m_Enclosing;
+        m_Chunk = &m_Scope.m_Function->m_Chunk;
+      }
+
       return function;
     }
 
     size_t Compiler::makeConstant(const value_t& value) {
-      size_t offset = m_Chunk.addConstant(value);
+      size_t offset = m_Chunk->addConstant(value);
       return offset;
     }
 
@@ -350,6 +376,9 @@ namespace clox {
     }
 
     void Compiler::markInitialized(void) {
+      if (m_Scope.m_Depth == 0)
+        return;
+
       m_Scope.m_Locals.back().m_Depth = m_Scope.m_Depth;
     }
 
@@ -359,7 +388,7 @@ namespace clox {
 
     parse_rule_table_t Compiler::getParseRules(void) {
       static parse_rule_table_t rules = {
-        {TokenType::LEFT_PAREN,       {&Compiler::grouping,   nullptr,              Precedence::NONE}},
+        {TokenType::LEFT_PAREN,       {&Compiler::grouping,   &Compiler::call,      Precedence::CALL}},
         {TokenType::RIGHT_PAREN,      {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::LEFT_BRACE,       {nullptr,               nullptr,              Precedence::NONE}},
         {TokenType::RIGHT_BRACE,      {nullptr,               nullptr,              Precedence::NONE}},
@@ -519,6 +548,11 @@ namespace clox {
       patchJump(endJump);
     }
 
+    void Compiler::call(bool canAssign) {
+      size_t count = argumentList();
+      emitBytes({ OpCode::CALL, count });
+    }
+
     void Compiler::namedVariable(const Token& token, bool canAssign) {
       int_t arg = resolveLocal(token);
       size_t offset;
@@ -580,6 +614,42 @@ namespace clox {
 
       if (canAssign && match(TokenType::EQUAL))
         error("Invalid assignment target.");
+    }
+
+    void Compiler::function(const FunctionType& type) {
+      Scope scope = m_Scope;
+      m_Scope = Scope(&scope, FunctionType::FUNCTION);
+      m_Chunk = &m_Scope.m_Function->m_Chunk;
+      m_Scope.m_Function->m_Name = m_Parser.m_Prev.m_Lexeme;
+      beginScope();
+
+      consume(TokenType::LEFT_PAREN, "Expect '(' after function name.");
+      if (!check(TokenType::RIGHT_PAREN)) {
+        do {
+          m_Scope.m_Function->m_Arity++;
+          size_t constant = parseVariable("Expect parameter name.");
+          defineVariable(constant);
+        } while (match(TokenType::COMMA));
+      }
+      consume(TokenType::RIGHT_PAREN, "Expect ')' after parameters.");
+      consume(TokenType::LEFT_BRACE, "Expect '{' before function body.");
+      block();
+
+      function_ptr_t function = endCompiler();
+      emitBytes({ OpCode::CONSTANT, makeConstant(function)});
+    }
+
+    size_t Compiler::argumentList(void) {
+      size_t count = 0;
+      if (!check(TokenType::RIGHT_PAREN)) {
+        do {
+          expression();
+          count++;
+        } while (match(TokenType::COMMA));
+      }
+
+      consume(TokenType::RIGHT_PAREN, "Expect ')' after arguments.");
+      return count;
     }
   }
 }

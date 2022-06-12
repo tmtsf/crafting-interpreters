@@ -64,10 +64,12 @@ namespace clox {
 
   using int_vec_t = std::vector<int_t>;
 
-
   using global_table_t = std::unordered_map<string_t, value_t>;
 
   using local_vec_t = std::vector<compiler::Local>;
 
   using call_frame_vec_t = std::vector<vm::CallFrame>;
+
+  using scope_ptr_t = compiler::Scope*;
+  using chunk_ptr_t = vm::Chunk*;
 }

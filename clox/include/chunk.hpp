@@ -28,7 +28,8 @@ namespace clox {
       SET_LOCAL,
       JUMP_IF_FALSE,
       JUMP,
-      LOOP
+      LOOP,
+      CALL
     };
 
     class Chunk {

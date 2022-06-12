@@ -44,6 +44,9 @@ namespace clox {
 
       bool isFalsey(const value_t& value) const;
       bool areEqual(const value_t& left, const value_t& right) const;
+
+      bool callValue(const value_t& value, size_t count);
+      bool call(const function_ptr_t& function, size_t count);
     private:
       call_frame_vec_t m_Frames;
       value_stack_t m_Stack;

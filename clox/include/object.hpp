@@ -27,12 +27,12 @@ namespace clox {
 
     struct Function final : public Object {
     public:
-      Function(void) = default;
+      Function(void);
     public:
       virtual void print(void) const override;
     public:
       string_t m_Name;
-      int_t m_Arity;
+      size_t m_Arity;
       vm::Chunk m_Chunk;
     };
   }

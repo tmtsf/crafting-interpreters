@@ -16,6 +16,12 @@ namespace clox {
       printf("%s", m_Str.c_str());
     }
 
+    Function::Function(void) :
+      m_Name(""),
+      m_Arity(0),
+      m_Chunk()
+    { }
+
     void Function::print(void) const {
       if (m_Name.empty()) {
         printf("<script>");

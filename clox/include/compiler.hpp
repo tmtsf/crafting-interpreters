@@ -2,6 +2,7 @@
 
 #include "common.hpp"
 #include "scanner.hpp"
+#include "object.hpp"
 
 namespace clox {
   using namespace scanner;
@@ -65,15 +66,11 @@ namespace clox {
     };
 
     struct Scope {
-      Scope(const function_ptr_t& function,
-            const FunctionType& type) :
-        m_Function(function),
-        m_Type(type),
-        m_Locals(),
-        m_Depth(0)
-      {
-        m_Locals.emplace_back(Token(TokenType(), "", 0), 0);
-      }
+      Scope(const scope_ptr_t& enclosing,
+            const FunctionType& type);
+      ~Scope(void);
+
+      scope_ptr_t m_Enclosing;
 
       function_ptr_t m_Function;
       FunctionType m_Type;
@@ -87,7 +84,7 @@ namespace clox {
     class Compiler {
     public:
       //void compile(const string_t& source);
-      Compiler(Chunk& chunk);
+      Compiler(void);
       function_ptr_t compile(const string_t& source);
     private:
       void advance(void);
@@ -96,6 +93,7 @@ namespace clox {
       void declaration(void);
 
       void varDeclaration(void);
+      void funDeclaration(void);
 
       void statement(void);
       void printStatement(void);
@@ -104,6 +102,7 @@ namespace clox {
       void ifStatement(void);
       void whileStatement(void);
       void forStatement(void);
+      void returnStatement(void);
 
       void expression(void);
 
@@ -144,6 +143,7 @@ namespace clox {
       void variable(bool canAssign);
       void and_(bool canAssign);
       void or_(bool canAssign);
+      void call(bool canAssign);
 
       void parse(const Precedence& prec);
       void namedVariable(const Token& token, bool canAssign);
@@ -152,8 +152,11 @@ namespace clox {
 
       static parse_rule_table_t getParseRules(void);
       ParseRule parseRule(const TokenType& type);
+
+      void function(const FunctionType& type);
+      size_t argumentList(void);
     private:
-      Chunk& m_Chunk;
+      chunk_ptr_t m_Chunk;
       Scope m_Scope;
       Parser m_Parser;
       Scanner m_Scanner;

@@ -16,19 +16,15 @@ namespace clox {
     }
 
     InterpretResult VM::interpret(const string_t& source) {
-      Chunk chunk;
-      Compiler compiler(chunk);
+      Compiler compiler;
       function_ptr_t function = compiler.compile(source);
-      function->m_Chunk = chunk;
       if (!function)
         return InterpretResult::COMPILE_ERROR;
 
       m_Stack.push_back(function);
-      m_Frames.emplace_back(function, 
-                            0, 
-                            0);
+      call(function, 0);
 
-      chunk.disassemble("debug chunk");
+      function->m_Chunk.disassemble("debug chunk");
       printf("\n\n");
 
       return run();
@@ -145,7 +141,21 @@ namespace clox {
           binaryOp('/');
           break;
         case OpCode::RETURN:
-          return InterpretResult::OK;
+        {
+          value_t result = m_Stack.back();
+          m_Stack.pop_back();
+
+          size_t top = m_Frames.back().m_Start;
+          m_Frames.pop_back();
+          if (m_Frames.empty()) {
+            m_Stack.pop_back();
+            return InterpretResult::OK;
+          }
+          
+          m_Stack.erase(m_Stack.begin() + top, m_Stack.end());
+          m_Stack.push_back(result);
+          break;
+        }
         case OpCode::NIL:
           m_Stack.push_back(nullptr);
           break;
@@ -244,6 +254,14 @@ namespace clox {
           m_Frames.back().m_IP -= offset;
           break;
         }
+        case OpCode::CALL:
+        {
+          size_t count = readOffset();
+          if (!callValue(peek(count), count))
+            return InterpretResult::RUNTIME_ERROR;
+
+          break;
+        }
         default:
           return InterpretResult::RUNTIME_ERROR;
         }
@@ -283,6 +301,28 @@ namespace clox {
       }
 
       return false;
+    }
+
+    bool VM::callValue(const value_t& value, size_t count) {
+      if (std::holds_alternative<obj_ptr_t>(value)) {
+        // Function
+        function_ptr_t function = dynamic_cast<function_ptr_t>(std::get<obj_ptr_t>(value));
+        if (function)
+          return call(function, count);
+      }
+
+      fprintf(stderr, "Can only call functions now.");
+      return false;
+    }
+
+    bool VM::call(const function_ptr_t& function, size_t count) {
+      if (function->m_Arity != count) {
+        fprintf(stderr, "Expected %zu arguments but found %zu.", function->m_Arity, count);
+        return false;
+      }
+
+      m_Frames.emplace_back(function, 0, m_Stack.size() - count - 1);
+      return true;
     }
   }
 }
