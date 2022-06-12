@@ -1,10 +1,11 @@
 #pragma once
 
 #include "common.hpp"
+#include "chunk.hpp"
 
 namespace clox {
   namespace obj {
-    class Object {
+    struct Object {
     public:
       Object(void) = default;
       virtual ~Object(void) = default;
@@ -14,16 +15,25 @@ namespace clox {
       static obj_ptr_t formStringObject(const string_t& str);
     };
 
-    class String final : public Object {
+    struct String final : public Object {
     public:
       String(const string_t& str);
       virtual ~String(void) = default;
     public:
-      const string_t& getString(void) const;
       virtual void print(void) const override;
-    private:
+    public:
       string_t m_Str;
     };
 
+    struct Function final : public Object {
+    public:
+      Function(void) = default;
+    public:
+      virtual void print(void) const override;
+    public:
+      string_t m_Name;
+      int_t m_Arity;
+      vm::Chunk m_Chunk;
+    };
   }
 }

@@ -15,6 +15,8 @@ namespace clox {
 
     enum class InterpretResult;
     class VM;
+
+    struct CallFrame;
   }
 
   namespace scanner {
@@ -27,12 +29,14 @@ namespace clox {
     struct Parser;
     class Compiler;
     struct Local;
-    struct Stack;
+    enum class FunctionType;
+    struct Scope;
   }
 
   namespace obj {
-    class Object;
-    class String;
+    struct Object;
+    struct String;
+    struct Function;
   }
 
   namespace util {
@@ -46,6 +50,7 @@ namespace clox {
 
   using obj_ptr_t = obj::Object*;
   using string_ptr_t = obj::String*;
+  using function_ptr_t = obj::Function*;
 
   using byte_code_t = std::variant<vm::OpCode, size_t>;
   using byte_code_vec_t = std::vector<byte_code_t>;
@@ -55,12 +60,14 @@ namespace clox {
                                nullptr_t,
                                obj_ptr_t>;
   using value_vec_t = std::vector<value_t>;
+  using value_stack_t = std::vector<value_t>;
 
   using int_vec_t = std::vector<int_t>;
 
-  using value_stack_t = std::vector<value_t>;
 
   using global_table_t = std::unordered_map<string_t, value_t>;
 
   using local_vec_t = std::vector<compiler::Local>;
+
+  using call_frame_vec_t = std::vector<vm::CallFrame>;
 }

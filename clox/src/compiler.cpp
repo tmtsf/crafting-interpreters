@@ -30,21 +30,21 @@ namespace clox {
 
     Compiler::Compiler(Chunk& chunk) :
       m_Chunk(chunk),
-      m_Scope(),
+      m_Scope(new obj::Function(), FunctionType::SCRIPT),
       m_Parser(),
       m_Scanner()
     { }
 
-    bool Compiler::compile(const string_t& source) {
+    function_ptr_t Compiler::compile(const string_t& source) {
       m_Scanner.set(source);
       advance();
 
       while (!match(TokenType::END_OF_FILE))
         declaration();
 
-      endCompiler();
+      function_ptr_t function = endCompiler();
 
-      return !m_Parser.m_HadError;
+      return m_Parser.m_HadError ? nullptr : function;
     }
 
     void Compiler::advance(void) {
@@ -296,8 +296,11 @@ namespace clox {
       emitByte(offset);
     }
 
-    void Compiler::endCompiler(void) {
+    function_ptr_t Compiler::endCompiler(void) {
       emitReturn();
+
+      function_ptr_t function = m_Scope.m_Function;
+      return function;
     }
 
     size_t Compiler::makeConstant(const value_t& value) {

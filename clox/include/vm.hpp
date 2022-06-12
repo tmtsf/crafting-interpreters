@@ -12,6 +12,12 @@ namespace clox {
       RUNTIME_ERROR,
     };
 
+    struct CallFrame {
+      function_ptr_t m_Function;
+      size_t m_IP;
+      size_t m_Start;
+    };
+
     class VM {
     public:
       VM(void);
@@ -39,8 +45,7 @@ namespace clox {
       bool isFalsey(const value_t& value) const;
       bool areEqual(const value_t& left, const value_t& right) const;
     private:
-      Chunk m_Chunk;
-      size_t m_IP; // Instruction pointer
+      call_frame_vec_t m_Frames;
       value_stack_t m_Stack;
       global_table_t m_Globals;
     };

@@ -59,11 +59,24 @@ namespace clox {
       int m_Depth;
     };
 
+    enum class FunctionType {
+      FUNCTION,
+      SCRIPT
+    };
+
     struct Scope {
-      Scope(void) :
+      Scope(const function_ptr_t& function,
+            const FunctionType& type) :
+        m_Function(function),
+        m_Type(type),
         m_Locals(),
         m_Depth(0)
-      { }
+      {
+        m_Locals.emplace_back(Token(TokenType(), "", 0), 0);
+      }
+
+      function_ptr_t m_Function;
+      FunctionType m_Type;
 
       local_vec_t m_Locals;
       int_t m_Depth;
@@ -75,7 +88,7 @@ namespace clox {
     public:
       //void compile(const string_t& source);
       Compiler(Chunk& chunk);
-      bool compile(const string_t& source);
+      function_ptr_t compile(const string_t& source);
     private:
       void advance(void);
       void consume(const TokenType& type, const string_t& message);
@@ -112,7 +125,7 @@ namespace clox {
       size_t emitJump(const OpCode& jump);
       void patchJump(size_t offset);
       void emitLoop(size_t start);
-      void endCompiler(void);
+      function_ptr_t endCompiler(void);
 
       size_t makeConstant(const value_t& value);
       size_t parseVariable(const char* message);

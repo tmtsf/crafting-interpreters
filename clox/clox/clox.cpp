@@ -37,14 +37,21 @@ namespace {
 int main(int argc, const char* argv[]) {
   clox::vm::VM vm;
 
-  if (argc == 1) {
-    repl(vm);
-  } else if (argc == 2) {
-    runFile(vm, argv[1]);
-  } else {
-    fprintf(stderr, "Usage: clox [path]\n");
-    exit(64);
-  }
+  //if (argc == 1) {
+  //  repl(vm);
+  //} else if (argc == 2) {
+  //  runFile(vm, argv[1]);
+  //} else {
+  //  fprintf(stderr, "Usage: clox [path]\n");
+  //  exit(64);
+  //}
+
+  vm.interpret("var a = 3; \n"
+               "var b = 4; \n"
+               "{ \n"
+               "  var d = 5; \n"
+               "  print a + b * d; \n"
+               "}");
 
   return 0;
 } 

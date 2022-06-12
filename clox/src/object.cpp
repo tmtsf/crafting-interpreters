@@ -12,12 +12,17 @@ namespace clox {
       m_Str(str)
     { }
 
-    const string_t& String::getString(void) const {
-      return m_Str;
-    }
-
     void String::print(void) const {
       printf("%s", m_Str.c_str());
+    }
+
+    void Function::print(void) const {
+      if (m_Name.empty()) {
+        printf("<script>");
+        return;
+      }
+
+      printf("<fn %s>", m_Name.c_str());
     }
   }
 }

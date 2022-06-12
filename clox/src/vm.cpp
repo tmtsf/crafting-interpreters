@@ -8,9 +8,7 @@ namespace clox {
   using namespace obj;
 
   namespace vm {
-    VM::VM(void) :
-      m_Chunk(),
-      m_IP(0)
+    VM::VM(void)
     { }
 
     InterpretResult VM::interpret(void) {
@@ -18,32 +16,42 @@ namespace clox {
     }
 
     InterpretResult VM::interpret(const string_t& source) {
-      Compiler compiler(m_Chunk);
-      if (!compiler.compile(source))
+      Chunk chunk;
+      Compiler compiler(chunk);
+      function_ptr_t function = compiler.compile(source);
+      function->m_Chunk = chunk;
+      if (!function)
         return InterpretResult::COMPILE_ERROR;
 
-      m_Chunk.disassemble("debug chunk");
+      m_Stack.push_back(function);
+      m_Frames.emplace_back(function, 
+                            0, 
+                            0);
+
+      chunk.disassemble("debug chunk");
       printf("\n\n");
 
       return run();
     }
 
     const OpCode& VM::readByte(void) {
-      return m_Chunk.readByte(m_IP++);
+      CallFrame& frame = m_Frames.back();
+      return frame.m_Function->m_Chunk.readByte(frame.m_IP++);
     }
 
     const size_t VM::readOffset(void) {
-      return m_Chunk.readOffset(m_IP++);
+      CallFrame& frame = m_Frames.back();
+      return frame.m_Function->m_Chunk.readOffset(frame.m_IP++);
     }
 
     const value_t& VM::readConstant(void) {
-      return m_Chunk.readConstant(readOffset());
+      return m_Frames.back().m_Function->m_Chunk.readConstant(readOffset());
     }
 
     const string_t& VM::readString(void) {
       const value_t& name = readConstant();
       const string_ptr_t& pString = dynamic_cast<string_ptr_t>(std::get<obj_ptr_t>(name));
-      return pString->getString();
+      return pString->m_Str;
     }
 
     void VM::binaryAdd(void) {
@@ -62,7 +70,7 @@ namespace clox {
         auto pL = dynamic_cast<string_ptr_t>(std::get<obj_ptr_t>(l));
         auto pR = dynamic_cast<string_ptr_t>(std::get<obj_ptr_t>(r));
         if (pL && pR)
-          m_Stack.push_back(Object::formStringObject(pL->getString() + pR->getString()));
+          m_Stack.push_back(Object::formStringObject(pL->m_Str + pR->m_Str));
 
         return;
       }
@@ -169,7 +177,7 @@ namespace clox {
           binaryOp('<');
           break;
         case OpCode::PRINT:
-          m_Chunk.printValue(m_Stack.back());
+          m_Frames.back().m_Function->m_Chunk.printValue(m_Stack.back());
           m_Stack.pop_back();
           printf("\n");
           break;
@@ -204,29 +212,36 @@ namespace clox {
           break;
         }
         case OpCode::GET_LOCAL:
-          m_Stack.push_back(m_Stack[readOffset()]);
+        {
+          size_t offset = readOffset();
+          value_t local = m_Stack[m_Frames.back().m_Start + offset];
+          m_Stack.push_back(local);
           break;
+        }
         case OpCode::SET_LOCAL:
-          m_Stack[readOffset()] = peek(0);
+        {
+          size_t offset = readOffset();
+          m_Stack[m_Frames.back().m_Start + offset] = peek(0);
           break;
+        }
         case OpCode::JUMP_IF_FALSE:
         {
           size_t offset = readOffset();
           if (isFalsey(peek(0)))
-            m_IP += offset;
+            m_Frames.back().m_IP += offset;
 
           break;
         }
         case OpCode::JUMP:
         {
           size_t offset = readOffset();
-          m_IP += offset;
+          m_Frames.back().m_IP += offset;
           break;
         }
         case OpCode::LOOP:
         {
           size_t offset = readOffset();
-          m_IP -= offset;
+          m_Frames.back().m_IP -= offset;
           break;
         }
         default:
@@ -264,7 +279,7 @@ namespace clox {
         auto pL = dynamic_cast<string_ptr_t>(std::get<obj_ptr_t>(left));
         auto pR = dynamic_cast<string_ptr_t>(std::get<obj_ptr_t>(right));
         if (pL && pR)
-          return pL->getString().compare(pR->getString()) == 0;
+          return pL->m_Str.compare(pR->m_Str) == 0;
       }
 
       return false;
