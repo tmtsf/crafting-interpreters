@@ -81,13 +81,34 @@ int main(int argc, const char* argv[]) {
   //vm.interpret("var x = 123;                 \n"
   //             "x();                         \n");
 
-  vm.interpret("{                            \n"
-               "  fun fib(n) {               \n"
-               "    if (n < 2) return n;     \n"
-               "    return fib(n - 1) + fib(n - 2);   \n"
-               "  }                                   \n"
-               "  print fib(8);                       \n"
-               "}                                     \n");
+  //vm.interpret("{                            \n"
+  //             "  fun fib(n) {               \n"
+  //             "    if (n < 2) return n;     \n"
+  //             "    return fib(n - 1) + fib(n - 2);   \n"
+  //             "  }                                   \n"
+  //             "  print fib(8);                       \n"
+  //             "}                                     \n");
+
+  //vm.interpret("fun makeClosure() {          \n"
+  //             "  var local = \"local\";     \n"
+  //             "  fun closure() {            \n"
+  //             "    print local;             \n"
+  //             "  }                          \n"
+  //             "  return closure;            \n"
+  //             "}                            \n"
+  //             "var closure = makeClosure(); \n"
+  //             "closure();                   \n");
+
+  //vm.interpret("fun makeClosure(value) {                \n"
+  //             "  fun closure() {                       \n"
+  //             "    print value;                        \n"
+  //             "  }                                     \n"
+  //             "  return closure;                       \n"
+  //             "}                                       \n"
+  //             "var donut = makeClosure(\"donut\");     \n"
+  //             "var bagel = makeClosure(\"bagel\");     \n"
+  //             "donut();                                \n"
+  //             "bagel();                                \n");
 
   return 0;
 } 

@@ -3,8 +3,17 @@
 namespace clox {
   namespace obj {
 
-    obj_ptr_t Object::formStringObject(const string_t& str) {
+    string_ptr_t Object::formStringObject(const string_t& str) {
       return new String(str);
+    }
+
+    function_ptr_t Object::formFunctionObject(void) {
+      return new Function();
+    }
+
+    closure_ptr_t Object::formClosureObject(const function_ptr_t& function)
+    {
+      return new Closure(function);
     }
 
     String::String(const string_t& str) :
@@ -29,6 +38,14 @@ namespace clox {
       }
 
       printf("<fn %s>", m_Name.c_str());
+    }
+
+    Closure::Closure(const function_ptr_t& function) :
+      m_Function(function)
+    { }
+
+    void Closure::print(void) const {
+      m_Function->print();
     }
   }
 }

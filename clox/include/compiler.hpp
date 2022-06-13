@@ -61,6 +61,7 @@ namespace clox {
     };
 
     enum class FunctionType {
+      CLOSURE,
       FUNCTION,
       SCRIPT
     };
@@ -68,7 +69,6 @@ namespace clox {
     struct Scope {
       Scope(const scope_ptr_t& enclosing,
             const FunctionType& type);
-      ~Scope(void);
 
       scope_ptr_t m_Enclosing;
 

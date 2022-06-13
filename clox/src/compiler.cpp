@@ -15,12 +15,8 @@ namespace clox {
       m_Locals(),
       m_Depth(0)
     {
-      m_Function = new obj::Function();
+      m_Function = obj::Object::formFunctionObject();
       m_Locals.emplace_back(Token(TokenType(), "", 0), 0);
-    }
-
-    Scope::~Scope(void) {
-      //delete m_Function;
     }
 
     Compiler::Compiler(void) :
@@ -636,7 +632,7 @@ namespace clox {
       block();
 
       function_ptr_t function = endCompiler();
-      emitBytes({ OpCode::CONSTANT, makeConstant(function)});
+      emitBytes({ OpCode::CLOSURE, makeConstant(function)});
     }
 
     size_t Compiler::argumentList(void) {

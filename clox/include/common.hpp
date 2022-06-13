@@ -37,6 +37,7 @@ namespace clox {
     struct Object;
     struct String;
     struct Function;
+    struct Closure;
   }
 
   namespace util {
@@ -51,6 +52,7 @@ namespace clox {
   using obj_ptr_t = obj::Object*;
   using string_ptr_t = obj::String*;
   using function_ptr_t = obj::Function*;
+  using closure_ptr_t = obj::Closure*;
 
   using byte_code_t = std::variant<vm::OpCode, size_t>;
   using byte_code_vec_t = std::vector<byte_code_t>;

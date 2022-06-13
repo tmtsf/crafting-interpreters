@@ -101,6 +101,15 @@ namespace clox {
         return jumpInstruction("LOOP", -1, offset);
       case OpCode::CALL:
         return byteInstruction("CALL", offset);
+      case OpCode::CLOSURE:
+      {
+        ++offset;
+        size_t constant = std::get<size_t>(m_ByteCodes[offset++]);
+        printf("%-16s %4zu ", "CLOSURE", constant);
+        printValue(m_Constants[constant]);
+        printf("\n");
+        return offset;
+      }
       default:
         printf("Unknown opcode %d\n", instruction);
         return offset + 1;

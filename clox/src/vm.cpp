@@ -22,7 +22,10 @@ namespace clox {
         return InterpretResult::COMPILE_ERROR;
 
       m_Stack.push_back(function);
-      call(function, 0);
+      closure_ptr_t closure = Object::formClosureObject(function);
+      m_Stack.pop_back();
+      m_Stack.push_back(closure);
+      call(closure, 0);
 
       function->m_Chunk.disassemble("debug chunk");
       printf("\n\n");
@@ -32,16 +35,16 @@ namespace clox {
 
     const OpCode& VM::readByte(void) {
       CallFrame& frame = m_Frames.back();
-      return frame.m_Function->m_Chunk.readByte(frame.m_IP++);
+      return frame.m_Closure->m_Function->m_Chunk.readByte(frame.m_IP++);
     }
 
     const size_t VM::readOffset(void) {
       CallFrame& frame = m_Frames.back();
-      return frame.m_Function->m_Chunk.readOffset(frame.m_IP++);
+      return frame.m_Closure->m_Function->m_Chunk.readOffset(frame.m_IP++);
     }
 
     const value_t& VM::readConstant(void) {
-      return m_Frames.back().m_Function->m_Chunk.readConstant(readOffset());
+      return m_Frames.back().m_Closure->m_Function->m_Chunk.readConstant(readOffset());
     }
 
     const string_t& VM::readString(void) {
@@ -187,7 +190,7 @@ namespace clox {
           binaryOp('<');
           break;
         case OpCode::PRINT:
-          m_Frames.back().m_Function->m_Chunk.printValue(m_Stack.back());
+          m_Frames.back().m_Closure->m_Function->m_Chunk.printValue(m_Stack.back());
           m_Stack.pop_back();
           printf("\n");
           break;
@@ -262,6 +265,13 @@ namespace clox {
 
           break;
         }
+        case OpCode::CLOSURE:
+        {
+          function_ptr_t function = dynamic_cast<function_ptr_t>(std::get<obj_ptr_t>(readConstant()));
+          closure_ptr_t closure = Object::formClosureObject(function);
+          m_Stack.push_back(closure);
+          break;
+        }
         default:
           return InterpretResult::RUNTIME_ERROR;
         }
@@ -305,23 +315,30 @@ namespace clox {
 
     bool VM::callValue(const value_t& value, size_t count) {
       if (std::holds_alternative<obj_ptr_t>(value)) {
-        // Function
-        function_ptr_t function = dynamic_cast<function_ptr_t>(std::get<obj_ptr_t>(value));
-        if (function)
-          return call(function, count);
+        obj_ptr_t o = std::get<obj_ptr_t>(value);
+
+        //// Function
+        //function_ptr_t function = dynamic_cast<function_ptr_t>(o);
+        //if (function)
+        //  return call(function, count);
+
+        // Closure
+        closure_ptr_t closure = dynamic_cast<closure_ptr_t>(o);
+        if (closure)
+          return call(closure, count);
       }
 
       fprintf(stderr, "Can only call functions now.");
       return false;
     }
 
-    bool VM::call(const function_ptr_t& function, size_t count) {
-      if (function->m_Arity != count) {
-        fprintf(stderr, "Expected %zu arguments but found %zu.", function->m_Arity, count);
+    bool VM::call(const closure_ptr_t& closure, size_t count) {
+      if (closure->m_Function->m_Arity != count) {
+        fprintf(stderr, "Expected %zu arguments but found %zu.", closure->m_Function->m_Arity, count);
         return false;
       }
 
-      m_Frames.emplace_back(function, 0, m_Stack.size() - count - 1);
+      m_Frames.emplace_back(closure, 0, m_Stack.size() - count - 1);
       return true;
     }
   }
